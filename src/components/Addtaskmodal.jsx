@@ -67,15 +67,13 @@ export default function AddTaskModal({ defaultColumn, onAdd, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/65 backdrop-blur-md flex items-center justify-center z-[1000] animate-fade-in"
+      className="fixed inset-0 bg-black/65 backdrop-blur-md flex items-center justify-center z-1000 animate-fade-in"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-[460px] max-w-[calc(100vw-2rem)] bg-modal border border-border-medium rounded-lg overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.6)] animate-slide-up">
+      <div className="w-115 max-w-[calc(100vw-2rem)] bg-modal border border-border-medium rounded-lg overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.6)] animate-slide-up">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-border-subtle">
-          <h2 className="text-base font-extrabold tracking-tight text-text-primary">
-            New Task
-          </h2>
+          <h2 className="text-base font-extrabold tracking-tight">New Task</h2>
           <button
             onClick={onClose}
             className="w-7 h-7 rounded-full flex items-center justify-center text-xl text-text-muted transition-all duration-150 hover:text-text-primary hover:bg-border-subtle"
@@ -88,7 +86,7 @@ export default function AddTaskModal({ defaultColumn, onAdd, onClose }) {
         <div className="px-6 py-5 flex flex-col">
           <Label>Title</Label>
           <input
-            className={`${inputBase} ${shake ? "animate-shake !border-coral" : ""}`}
+            className={`${inputBase} ${shake ? "animate-shake border-coral!" : ""}`}
             placeholder="What needs to be done?"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -174,7 +172,7 @@ export default function AddTaskModal({ defaultColumn, onAdd, onClose }) {
         <div className="flex gap-2.5 justify-end px-6 py-4 border-t border-border-subtle">
           <button
             onClick={onClose}
-            className="px-[18px] py-2 rounded-sm text-[13px] font-semibold text-text-secondary bg-surface border border-border-subtle transition-all duration-150 hover:text-text-primary hover:border-border-medium"
+            className="px-4.5 py-2 rounded-sm text-[13px] font-semibold text-text-secondary bg-surface border border-border-subtle transition-all duration-150 hover:text-text-primary hover:border-border-medium"
           >
             Cancel
           </button>

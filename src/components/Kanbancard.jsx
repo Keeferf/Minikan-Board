@@ -51,7 +51,7 @@ export default function KanbanCard({ card, onDelete, onDragStart }) {
       <span
         className={`
           absolute left-0 top-1/2 -translate-y-1/2
-          w-[3px] rounded-r-sm opacity-70
+          w-0.75 rounded-r-sm opacity-70
           transition-all duration-200
           group-hover:opacity-100
           ${PIP[card.priority] ?? PIP.low}
@@ -83,7 +83,7 @@ export default function KanbanCard({ card, onDelete, onDragStart }) {
         {card.tags?.map((tag) => (
           <span
             key={tag}
-            className="font-mono text-[10px] uppercase tracking-widest text-text-muted border border-border-subtle bg-white/[0.03] rounded px-1.5 py-0.5"
+            className="font-mono text-[10px] uppercase tracking-widest text-text-muted border border-border-subtle bg-white/3 rounded px-1.5 py-0.5"
           >
             {tag}
           </span>
@@ -95,7 +95,7 @@ export default function KanbanCard({ card, onDelete, onDragStart }) {
           aria-label="Delete card"
           className="
             ml-auto w-5 h-5 rounded-full flex items-center justify-center
-            text-base leading-none text-text-muted
+            text-base leading-none
             transition-all duration-150
             hover:text-coral hover:bg-coral/10
           "

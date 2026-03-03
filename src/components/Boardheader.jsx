@@ -7,12 +7,12 @@ export default function BoardHeader({ totalCards, onNewTask }) {
   });
 
   return (
-    <header className="flex items-center justify-between px-7 py-5 border-b border-border-subtle bg-base flex-shrink-0">
+    <header className="flex items-center justify-between px-7 py-5 border-b border-border-subtle bg-base shrink-0">
       {/* Left — logo + title */}
       <div className="flex items-center gap-3.5">
         {/* Three-bar logomark using brand colors */}
-        <div className="flex flex-col gap-[3px]">
-          <span className="block h-1.5 w-[22px] rounded-full bg-gold" />
+        <div className="flex flex-col gap-0.75">
+          <span className="block h-1.5 w-5.5 rounded-full bg-gold" />
           <span className="block h-1.5 w-4   rounded-full bg-teal" />
           <span className="block h-1.5 w-2.5 rounded-full bg-coral" />
         </div>

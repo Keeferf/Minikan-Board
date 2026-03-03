@@ -10,69 +10,10 @@ const COLUMNS = [
   { id: "done", label: "Done", color: "#ef5b5b" },
 ];
 
-const SEED_CARDS = [
-  {
-    id: "c1",
-    title: "Set up Tauri project scaffolding",
-    description: "Init Vite + React + Tauri and verify builds.",
-    priority: "high",
-    column: "done",
-    tags: ["setup"],
-  },
-  {
-    id: "c2",
-    title: "Design system & color tokens",
-    description: "Define CSS variables from brand guide.",
-    priority: "medium",
-    column: "done",
-    tags: ["design"],
-  },
-  {
-    id: "c3",
-    title: "Build Kanban board UI",
-    description: "Modular components with DnD support.",
-    priority: "high",
-    column: "progress",
-    tags: ["ui"],
-  },
-  {
-    id: "c4",
-    title: "Wire up drag-and-drop",
-    description: "HTML5 DnD API between columns.",
-    priority: "medium",
-    column: "progress",
-    tags: ["ui", "dnd"],
-  },
-  {
-    id: "c5",
-    title: "Persist board state to disk",
-    description: "Use Tauri fs plugin for JSON storage.",
-    priority: "medium",
-    column: "review",
-    tags: ["tauri"],
-  },
-  {
-    id: "c6",
-    title: "Add keyboard shortcuts",
-    description: "n = new task, Esc = close modal.",
-    priority: "low",
-    column: "todo",
-    tags: ["a11y"],
-  },
-  {
-    id: "c7",
-    title: "System tray integration",
-    description: "Quick-add task from tray menu.",
-    priority: "low",
-    column: "todo",
-    tags: ["tauri"],
-  },
-];
-
 let nextId = 100;
 
 export default function KanbanBoard() {
-  const [cards, setCards] = useState(SEED_CARDS);
+  const [cards, setCards] = useState([]);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalColumn, setModalColumn] = useState("todo");
   const dragCardId = useRef(null);
