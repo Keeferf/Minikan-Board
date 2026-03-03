@@ -1,0 +1,36 @@
+/* ── Brand Tokens ────────────────────────────────────────── */
+:root {
+  --sunflower-gold: #ffba49;
+  --light-sea-green: #20a39e;
+  --vibrant-coral: #ef5b5b;
+
+  /* Surfaces */
+  --bg-base: #0f0f11;
+  --bg-surface: #17171b;
+  --bg-card: #1e1e24;
+  --bg-card-hover: #25252d;
+  --bg-modal: #1a1a21;
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-medium: rgba(255, 255, 255, 0.12);
+
+  /* Text */
+  --text-primary: #f0efe8;
+  --text-secondary: #8a8a96;
+  --text-muted: #52525e;
+
+  /* Column accent aliases */
+  --col-todo: var(--text-secondary);
+  --col-progress: var(--sunflower-gold);
+  --col-review: var(--light-sea-green);
+  --col-done: var(--vibrant-coral);
+
+  /* Spacing */
+  --r-sm: 6px;
+  --r-md: 10px;
+  --r-lg: 14px;
+
+  /* Transitions */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
