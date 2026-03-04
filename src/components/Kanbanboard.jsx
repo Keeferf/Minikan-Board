@@ -1,6 +1,7 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { invoke } from "@tauri-apps/api/core";
 import KanbanColumn from "./Kanbancolumn.jsx";
-import BoardHeader from "./BoardHeader";
+import BoardHeader from "./Boardheader.jsx";
 import AddTaskModal from "./Addtaskmodal.jsx";
 
 const COLUMNS = [
@@ -12,37 +13,103 @@ const COLUMNS = [
 
 let nextId = 100;
 
+function deserializeCard(card) {
+  return {
+    ...card,
+    tags: card.tags ? card.tags.split(",").filter(Boolean) : [],
+  };
+}
+
 export default function KanbanBoard() {
   const [cards, setCards] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalColumn, setModalColumn] = useState("todo");
   const dragCardId = useRef(null);
 
+  // ── Load all cards from Rust/SQLite on mount ──────────────────────────
+  useEffect(() => {
+    invoke("get_cards")
+      .then((rows) => {
+        const parsed = rows.map(deserializeCard);
+        setCards(parsed);
+
+        // Keep in-memory id counter above whatever is already persisted
+        if (parsed.length > 0) {
+          const maxNum = parsed
+            .map((c) => parseInt(c.id.replace("c", ""), 10))
+            .filter(Number.isFinite)
+            .reduce((a, b) => Math.max(a, b), 0);
+          if (maxNum >= nextId) nextId = maxNum + 1;
+        }
+      })
+      .catch(console.error)
+      .finally(() => setLoading(false));
+  }, []);
+
+  // ── Open modal ────────────────────────────────────────────────────────
   const openAddModal = useCallback((colId = "todo") => {
     setModalColumn(colId);
     setModalOpen(true);
   }, []);
 
-  const handleAddCard = useCallback((data) => {
-    setCards((prev) => [...prev, { id: `c${nextId++}`, ...data }]);
+  // ── Add card ──────────────────────────────────────────────────────────
+  const handleAddCard = useCallback(async (data) => {
+    const newCard = { id: `c${nextId++}`, ...data };
+
+    setCards((prev) => [...prev, newCard]); // optimistic
+
+    try {
+      await invoke("add_card", {
+        id: newCard.id,
+        title: newCard.title,
+        description: newCard.description ?? "",
+        priority: newCard.priority,
+        column: newCard.column,
+        tags: (newCard.tags ?? []).join(","),
+      });
+    } catch (err) {
+      console.error("add_card failed:", err);
+      setCards((prev) => prev.filter((c) => c.id !== newCard.id)); // roll back
+    }
   }, []);
 
-  const handleDeleteCard = useCallback((cardId) => {
-    setCards((prev) => prev.filter((c) => c.id !== cardId));
+  // ── Delete card ───────────────────────────────────────────────────────
+  const handleDeleteCard = useCallback(async (cardId) => {
+    setCards((prev) => prev.filter((c) => c.id !== cardId)); // optimistic
+
+    try {
+      await invoke("delete_card", { id: cardId });
+    } catch (err) {
+      console.error("delete_card failed:", err);
+      invoke("get_cards")
+        .then((rows) => setCards(rows.map(deserializeCard)))
+        .catch(console.error);
+    }
   }, []);
 
+  // ── Drag-and-drop ─────────────────────────────────────────────────────
   const handleDragStart = useCallback((e, cardId) => {
     dragCardId.current = cardId;
   }, []);
 
-  const handleDrop = useCallback((targetColId) => {
+  const handleDrop = useCallback(async (targetColId) => {
     if (!dragCardId.current) return;
-    setCards((prev) =>
-      prev.map((c) =>
-        c.id === dragCardId.current ? { ...c, column: targetColId } : c,
-      ),
-    );
+    const cardId = dragCardId.current;
     dragCardId.current = null;
+
+    setCards((prev) =>
+      prev.map((c) => (c.id === cardId ? { ...c, column: targetColId } : c)),
+    ); // optimistic
+
+    try {
+      await invoke("move_card", { id: cardId, column: targetColId });
+    } catch (err) {
+      console.error("move_card failed:", err);
+      invoke("get_cards")
+        .then((rows) => setCards(rows.map(deserializeCard)))
+        .catch(console.error);
+    }
   }, []);
 
   const cardsByColumn = (colId) => cards.filter((c) => c.column === colId);
@@ -54,19 +121,27 @@ export default function KanbanBoard() {
         onNewTask={() => openAddModal("todo")}
       />
 
-      <div className="flex-1 flex gap-4 px-7 py-5 overflow-x-auto overflow-y-hidden items-start">
-        {COLUMNS.map((col) => (
-          <KanbanColumn
-            key={col.id}
-            column={col}
-            cards={cardsByColumn(col.id)}
-            onAddTask={openAddModal}
-            onDeleteCard={handleDeleteCard}
-            onDragStart={handleDragStart}
-            onDrop={handleDrop}
-          />
-        ))}
-      </div>
+      {loading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <span className="font-mono text-sm text-text-muted animate-pulse">
+            Loading…
+          </span>
+        </div>
+      ) : (
+        <div className="flex-1 flex gap-4 px-7 py-5 overflow-x-auto overflow-y-hidden items-start">
+          {COLUMNS.map((col) => (
+            <KanbanColumn
+              key={col.id}
+              column={col}
+              cards={cardsByColumn(col.id)}
+              onAddTask={openAddModal}
+              onDeleteCard={handleDeleteCard}
+              onDragStart={handleDragStart}
+              onDrop={handleDrop}
+            />
+          ))}
+        </div>
+      )}
 
       {modalOpen && (
         <AddTaskModal

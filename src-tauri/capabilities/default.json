@@ -3,12 +3,14 @@
   "identifier": "default",
   "description": "Capability for the main window",
   "windows": ["main"],
-  "permissions": [
-    "core:default",
-    "sql:default",
-    "sql:allow-load",
-    "sql:allow-execute",
-    "sql:allow-select",
-    "sql:allow-close"
-  ]
+  "permissions": ["core:default", "opener:default"],
+  "commands": {
+    "allow": [
+      "get_cards",
+      "add_card",
+      "delete_card",
+      "move_card",
+      "update_card"
+    ]
+  }
 }
