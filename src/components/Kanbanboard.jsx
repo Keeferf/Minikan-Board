@@ -1,124 +1,45 @@
-import { useState, useCallback, useEffect, useRef } from "react";
-import { invoke } from "@tauri-apps/api/core";
-import KanbanColumn from "./Kanbancolumn.jsx";
-import BoardHeader from "./Boardheader.jsx";
-import AddTaskModal from "./Addtaskmodal.jsx";
+import { useState, useCallback } from "react";
+import KanbanColumn from "./Kanbancolumn";
+import BoardHeader from "./Boardheader";
+import AddTaskModal from "./Addtaskmodal";
+import { COLUMNS } from "../lib/kanbanConstants";
+import { useCards } from "../hooks/useCards";
+import { useDragAndDrop } from "../hooks/useDragAndDrop";
+import { useWindowWidth } from "../hooks/useWindowWidth";
 
-const COLUMNS = [
-  { id: "todo", label: "To Do", color: "#52525e" },
-  { id: "progress", label: "In Progress", color: "#ffba49" },
-  { id: "review", label: "Review", color: "#20a39e" },
-  { id: "done", label: "Done", color: "#ef5b5b" },
-];
-
-let nextId = 100;
-
-function deserializeCard(card) {
-  return {
-    ...card,
-    tags: card.tags ? card.tags.split(",").filter(Boolean) : [],
-  };
-}
+// 4 columns × 280px + 3 gaps × 16px + 2 × 28px padding
+const HORIZONTAL_BREAKPOINT = 1200;
 
 export default function KanbanBoard() {
-  const [cards, setCards] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { cards, loading, addCard, deleteCard, moveCard } = useCards();
+  const { dragging, dragOverCol, startDrag, registerCol } =
+    useDragAndDrop(moveCard);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [modalColumn, setModalColumn] = useState("todo");
-  const dragCardId = useRef(null);
 
-  // ── Load all cards from Rust/SQLite on mount ──────────────────────────
-  useEffect(() => {
-    invoke("get_cards")
-      .then((rows) => {
-        const parsed = rows.map(deserializeCard);
-        setCards(parsed);
+  const width = useWindowWidth();
+  const isVertical = width < HORIZONTAL_BREAKPOINT;
 
-        // Keep in-memory id counter above whatever is already persisted
-        if (parsed.length > 0) {
-          const maxNum = parsed
-            .map((c) => parseInt(c.id.replace("c", ""), 10))
-            .filter(Number.isFinite)
-            .reduce((a, b) => Math.max(a, b), 0);
-          if (maxNum >= nextId) nextId = maxNum + 1;
-        }
-      })
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
-
-  // ── Open modal ────────────────────────────────────────────────────────
   const openAddModal = useCallback((colId = "todo") => {
     setModalColumn(colId);
     setModalOpen(true);
   }, []);
 
-  // ── Add card ──────────────────────────────────────────────────────────
-  const handleAddCard = useCallback(async (data) => {
-    const newCard = { id: `c${nextId++}`, ...data };
-
-    setCards((prev) => [...prev, newCard]); // optimistic
-
-    try {
-      await invoke("add_card", {
-        id: newCard.id,
-        title: newCard.title,
-        description: newCard.description ?? "",
-        priority: newCard.priority,
-        column: newCard.column,
-        tags: (newCard.tags ?? []).join(","),
-      });
-    } catch (err) {
-      console.error("add_card failed:", err);
-      setCards((prev) => prev.filter((c) => c.id !== newCard.id)); // roll back
-    }
-  }, []);
-
-  // ── Delete card ───────────────────────────────────────────────────────
-  const handleDeleteCard = useCallback(async (cardId) => {
-    setCards((prev) => prev.filter((c) => c.id !== cardId)); // optimistic
-
-    try {
-      await invoke("delete_card", { id: cardId });
-    } catch (err) {
-      console.error("delete_card failed:", err);
-      invoke("get_cards")
-        .then((rows) => setCards(rows.map(deserializeCard)))
-        .catch(console.error);
-    }
-  }, []);
-
-  // ── Drag-and-drop ─────────────────────────────────────────────────────
-  const handleDragStart = useCallback((e, cardId) => {
-    dragCardId.current = cardId;
-  }, []);
-
-  const handleDrop = useCallback(async (targetColId) => {
-    if (!dragCardId.current) return;
-    const cardId = dragCardId.current;
-    dragCardId.current = null;
-
-    setCards((prev) =>
-      prev.map((c) => (c.id === cardId ? { ...c, column: targetColId } : c)),
-    ); // optimistic
-
-    try {
-      await invoke("move_card", { id: cardId, column: targetColId });
-    } catch (err) {
-      console.error("move_card failed:", err);
-      invoke("get_cards")
-        .then((rows) => setCards(rows.map(deserializeCard)))
-        .catch(console.error);
-    }
-  }, []);
-
   const cardsByColumn = (colId) => cards.filter((c) => c.column === colId);
+  const draggingCard = dragging
+    ? cards.find((c) => c.id === dragging.cardId)
+    : null;
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-base">
+    <div
+      className={`flex flex-col bg-base ${isVertical ? "min-h-screen" : "h-screen overflow-hidden"}`}
+      style={{ userSelect: dragging ? "none" : undefined }}
+    >
       <BoardHeader
         totalCards={cards.length}
         onNewTask={() => openAddModal("todo")}
+        isCompact={isVertical}
       />
 
       {loading ? (
@@ -127,26 +48,79 @@ export default function KanbanBoard() {
             Loading…
           </span>
         </div>
-      ) : (
-        <div className="flex-1 flex gap-4 px-7 py-5 overflow-x-auto overflow-y-hidden items-start">
+      ) : isVertical ? (
+        // ── Vertical layout — columns stack, page scrolls as one unit ────
+        <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-3">
           {COLUMNS.map((col) => (
             <KanbanColumn
               key={col.id}
               column={col}
               cards={cardsByColumn(col.id)}
               onAddTask={openAddModal}
-              onDeleteCard={handleDeleteCard}
-              onDragStart={handleDragStart}
-              onDrop={handleDrop}
+              onDeleteCard={deleteCard}
+              onPointerDown={startDrag}
+              isDragOver={dragOverCol === col.id}
+              draggingCardId={dragging?.cardId}
+              colRef={registerCol(col.id)}
+              isVertical
             />
           ))}
+        </div>
+      ) : (
+        // ── Horizontal layout — columns side by side, board scrolls x ────
+        <div className="flex-1 px-7 py-5 overflow-x-auto overflow-y-hidden">
+          <div
+            className="flex gap-4 min-w-max mx-auto"
+            style={{ width: "fit-content" }}
+          >
+            {COLUMNS.map((col) => (
+              <KanbanColumn
+                key={col.id}
+                column={col}
+                cards={cardsByColumn(col.id)}
+                onAddTask={openAddModal}
+                onDeleteCard={deleteCard}
+                onPointerDown={startDrag}
+                isDragOver={dragOverCol === col.id}
+                draggingCardId={dragging?.cardId}
+                colRef={registerCol(col.id)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Floating ghost card that follows the cursor */}
+      {dragging && draggingCard && (
+        <div
+          id="drag-ghost"
+          style={{
+            position: "fixed",
+            left: dragging.x + 14,
+            top: dragging.y - 18,
+            width: 272,
+            pointerEvents: "none",
+            zIndex: 9999,
+            opacity: 0.88,
+            transform: "rotate(2deg)",
+          }}
+          className="bg-card border border-teal rounded-md px-3.5 pt-3.5 pb-2.5 shadow-[0_20px_48px_rgba(0,0,0,0.55)]"
+        >
+          <p className="text-[13.5px] font-semibold text-text-primary leading-snug truncate">
+            {draggingCard.title}
+          </p>
+          {draggingCard.description && (
+            <p className="mt-1 font-mono text-xs text-text-secondary leading-relaxed line-clamp-2">
+              {draggingCard.description}
+            </p>
+          )}
         </div>
       )}
 
       {modalOpen && (
         <AddTaskModal
           defaultColumn={modalColumn}
-          onAdd={handleAddCard}
+          onAdd={addCard}
           onClose={() => setModalOpen(false)}
         />
       )}

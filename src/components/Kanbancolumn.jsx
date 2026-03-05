@@ -1,52 +1,39 @@
-import { useState } from "react";
-import KanbanCard from "./KanbanCard";
+import KanbanCard from "./Kanbancard";
 
 export default function KanbanColumn({
   column,
   cards,
   onAddTask,
   onDeleteCard,
-  onDragStart,
-  onDrop,
+  onPointerDown,
+  isDragOver,
+  draggingCardId,
+  colRef,
+  isVertical = false,
 }) {
-  const [isDragOver, setIsDragOver] = useState(false);
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    setIsDragOver(true);
-  };
-
-  const handleDragLeave = (e) => {
-    if (!e.currentTarget.contains(e.relatedTarget)) setIsDragOver(false);
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    onDrop(column.id);
-  };
-
   return (
     <section
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      ref={colRef}
       className={`
-        flex-none w-70 flex flex-col max-h-full
-        bg-surface border rounded-lg overflow-hidden
+        flex flex-col
+        bg-surface border-2 rounded-lg overflow-hidden
         transition-all duration-200
+        ${isVertical ? "w-full" : "flex-none w-70 max-h-full"}
         ${
           isDragOver
-            ? "border-teal shadow-[0_0_0_1px_#20a39e,inset_0_0_24px_rgba(32,163,158,0.05)]"
+            ? "border-teal bg-teal/5 shadow-[0_0_20px_rgba(32,163,158,0.2)]"
             : "border-border-subtle"
         }
       `}
     >
-      {/* Column header */}
-      <header className="flex items-center justify-between px-4 py-4 border-b border-border-subtle shrink-0">
+      {/* Header */}
+      <header
+        className={`
+          flex items-center justify-between border-b border-border-subtle shrink-0
+          ${isVertical ? "px-3 py-3" : "px-4 py-4"}
+        `}
+      >
         <div className="flex items-center gap-2">
-          {/* Colored dot */}
           <span
             className="w-2 h-2 rounded-full shrink-0"
             style={{ background: column.color }}
@@ -54,36 +41,36 @@ export default function KanbanColumn({
           <h3 className="text-[12px] font-extrabold uppercase tracking-[0.08em] text-text-primary">
             {column.label}
           </h3>
-          <span className="font-mono text-[11px] text-text-muted bg-card border border-border-subtle rounded-full px-1.5 py-px leading-relaxed">
+          <span className="font-mono text-[11px] text-text-muted bg-card border border-border-subtle rounded-full px-1.5 py-px">
             {cards.length}
           </span>
         </div>
 
         <button
           onClick={() => onAddTask(column.id)}
-          aria-label={`Add task to ${column.label}`}
-          className="
-            w-6.5 h-6.5 flex items-center justify-center rounded-sm
-            text-lg font-light text-text-muted bg-card border border-border-subtle
-            transition-all duration-150
-            hover:text-teal hover:border-teal hover:bg-teal/10
-          "
+          className="w-6.5 h-6.5 flex items-center justify-center rounded-sm text-lg font-light text-text-muted bg-card border border-border-subtle transition-all hover:text-teal hover:border-teal hover:bg-teal/10"
         >
           +
         </button>
       </header>
 
-      {/* Drop pulse indicator */}
-      {isDragOver && (
-        <div className="h-0.5 mx-4 mt-1.5 bg-teal rounded-full animate-pulse-line shrink-0" />
-      )}
-
-      {/* Cards */}
-      <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
+      {/* Cards — in vertical mode let content grow naturally, outer page scrolls */}
+      <div
+        className={`
+          flex flex-col gap-2
+          ${isVertical ? "p-2" : "flex-1 overflow-y-auto p-3 min-h-25"}
+        `}
+      >
         {cards.length === 0 ? (
-          <div className="flex-1 min-h-20 flex items-center justify-center border border-dashed border-border-subtle rounded-md my-1">
-            <span className="font-mono text-[11px] text-text-muted tracking-wider">
-              Drop tasks here
+          <div
+            className={`
+              min-h-20 flex items-center justify-center
+              border-2 border-dashed rounded-md transition-colors
+              ${isDragOver ? "border-teal bg-teal/10" : "border-border-subtle"}
+            `}
+          >
+            <span className="font-mono text-[11px] text-text-muted">
+              {isDragOver ? "⬇ Drop here" : "Drop tasks here"}
             </span>
           </div>
         ) : (
@@ -92,7 +79,8 @@ export default function KanbanColumn({
               key={card.id}
               card={card}
               onDelete={onDeleteCard}
-              onDragStart={onDragStart}
+              onPointerDown={onPointerDown}
+              isDragging={card.id === draggingCardId}
             />
           ))
         )}

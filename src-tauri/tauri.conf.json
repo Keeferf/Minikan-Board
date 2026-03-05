@@ -1,5 +1,4 @@
 {
-  "$schema": "https://schema.tauri.app/config/2",
   "productName": "kanban-app",
   "version": "0.1.0",
   "identifier": "com.kanban.app",
@@ -13,10 +12,13 @@
     "windows": [
       {
         "title": "Kanban Board",
-        "width": 1400,
-        "height": 900,
+        "width": 1240,
+        "height": 800,
+        "minWidth": 1100,
+        "minHeight": 600,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "center": true
       }
     ],
     "security": {
