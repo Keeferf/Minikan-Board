@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./src-tauri/icons/128x128@2x.png" alt="Minikan logo" width="96" />
+  <img src="./icons/128x128.png" alt="Minikan logo" width="96" />
   <h1>Minikan Board</h1>
   <p>A fast, minimal Kanban board for your desktop. No accounts. No sync. Just work.</p>
 
@@ -10,7 +10,24 @@
     <img src="https://img.shields.io/badge/SQLite-local--only-003B57?style=flat-square&logo=sqlite&logoColor=white" alt="SQLite" />
     <img src="https://img.shields.io/badge/license-MIT-ffba49?style=flat-square" alt="License" />
   </p>
+
+  <a href="https://github.com/your-username/minikan-board/releases/latest">
+    <img src="https://img.shields.io/badge/⬇ Download-Windows Installer-20a39e?style=for-the-badge" alt="Download" />
+  </a>
 </div>
+
+---
+
+## Installation
+
+> **For users who just want to run the app — no coding required.**
+
+1. Go to the [**Releases**](https://github.com/your-username/minikan-board/releases/latest) page
+2. Under **Assets**, download `minikan-board_x64-setup.exe`
+3. Run the installer — it takes about 10 seconds
+4. Launch **Minikan Board** from your Start menu or desktop
+
+That's it. No Node.js, no Rust, no terminal needed.
 
 ---
 
@@ -217,6 +234,12 @@ All tokens are defined in `index.css` under `@theme` and consumed as standard Ta
 | [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer)               | Rust language server                     |
 | [Tailwind CSS IntelliSense](https://marketplace.visualstudio.com/items?itemName=bradlc.vscode-tailwindcss) | Autocomplete for Tailwind utilities      |
 | [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint)                       | JavaScript/JSX linting                   |
+
+---
+
+## Contributing
+
+Contributions are welcome. Please open an issue first to discuss what you'd like to change, then submit a pull request against `main`. Make sure any Rust changes compile cleanly with `cargo check` and any frontend changes pass `npm run lint` before opening a PR.
 
 ---
 

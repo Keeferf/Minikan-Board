@@ -1,5 +1,5 @@
 {
-  "productName": "MiniKan Board",
+  "productName": "minikan-board",
   "version": "0.1.0",
   "identifier": "com.minikan.board",
   "build": {
