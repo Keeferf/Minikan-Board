@@ -1,12 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, ChevronDown, Plus } from "lucide-react";
-
-const COLUMNS = [
-  { id: "todo", label: "To Do" },
-  { id: "progress", label: "In Progress" },
-  { id: "review", label: "Review" },
-  { id: "done", label: "Done" },
-];
+import { COLUMNS } from "../lib/kanbanConstants"; // ← shared source of truth
 
 const PRIORITY_STYLES = {
   active: {
@@ -46,13 +40,16 @@ export default function AddTaskModal({
     }
     onAdd({
       title: title.trim(),
-      description: desc.trim(),
+      description: desc.trim() || null,
       priority,
       column,
-      tags: tags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
+      // Join back to a comma-separated string to match Rust's Option<String>
+      tags:
+        tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean)
+          .join(",") || null,
     });
     onClose();
   };

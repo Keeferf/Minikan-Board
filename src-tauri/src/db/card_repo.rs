@@ -1,35 +1,36 @@
 use crate::models::card::{Card, NewCard};
-use sqlx::Pool;
-use sqlx::Sqlite;
+use sqlx::{Pool, Sqlite};
 use chrono::Utc;
 
-pub struct CardsRepo<'a> {
+pub struct CardRepo<'a> {
     pool: &'a Pool<Sqlite>,
 }
 
-impl<'a> CardsRepo<'a> {
+impl<'a> CardRepo<'a> {
     pub fn new(pool: &'a Pool<Sqlite>) -> Self {
         Self { pool }
     }
-    
-    pub async fn get_all(&self) -> Result<Vec<Card>, sqlx::Error> {
+
+    pub async fn get_all(&self, board_id: &str) -> Result<Vec<Card>, sqlx::Error> {
         sqlx::query_as::<_, Card>(
-            r#"SELECT id, title, description, priority, "column", tags, created_at 
-               FROM cards 
+            r#"SELECT id, board_id, title, description, priority, "column", tags, created_at
+               FROM cards
+               WHERE board_id = ?1
                ORDER BY created_at DESC"#
         )
+        .bind(board_id)
         .fetch_all(self.pool)
         .await
     }
-    
+
     pub async fn create(&self, card: NewCard) -> Result<(), sqlx::Error> {
         let created_at = Utc::now();
-        
         sqlx::query(
-            r#"INSERT INTO cards (id, title, description, priority, "column", tags, created_at) 
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)"#
+            r#"INSERT INTO cards (id, board_id, title, description, priority, "column", tags, created_at)
+               VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)"#
         )
         .bind(&card.id)
+        .bind(&card.board_id)
         .bind(&card.title)
         .bind(card.description.unwrap_or_default())
         .bind(&card.priority)
@@ -38,10 +39,9 @@ impl<'a> CardsRepo<'a> {
         .bind(created_at)
         .execute(self.pool)
         .await?;
-        
         Ok(())
     }
-    
+
     pub async fn delete(&self, id: &str) -> Result<(), sqlx::Error> {
         sqlx::query("DELETE FROM cards WHERE id = ?1")
             .bind(id)
@@ -49,7 +49,7 @@ impl<'a> CardsRepo<'a> {
             .await?;
         Ok(())
     }
-    
+
     pub async fn move_card(&self, id: &str, column: &str) -> Result<(), sqlx::Error> {
         sqlx::query(r#"UPDATE cards SET "column" = ?1 WHERE id = ?2"#)
             .bind(column)
@@ -58,25 +58,7 @@ impl<'a> CardsRepo<'a> {
             .await?;
         Ok(())
     }
-    
-    // For individual field updates
-    pub async fn update_field(
-        &self, 
-        id: &str, 
-        field: &str, 
-        value: &str
-    ) -> Result<(), sqlx::Error> {
-        // Note: In production, validate field names against whitelist
-        let query = format!("UPDATE cards SET {} = ?1 WHERE id = ?2", field);
-        sqlx::query(&query)
-            .bind(value)
-            .bind(id)
-            .execute(self.pool)
-            .await?;
-        Ok(())
-    }
-    
-    // Batch update for multiple fields
+
     pub async fn update(
         &self,
         id: &str,
@@ -102,11 +84,5 @@ impl<'a> CardsRepo<'a> {
                 .bind(t).bind(id).execute(self.pool).await?;
         }
         Ok(())
-    }
-    
-    pub async fn count(&self) -> Result<i64, sqlx::Error> {
-        sqlx::query_scalar("SELECT COUNT(*) FROM cards")
-            .fetch_one(self.pool)
-            .await
     }
 }

@@ -1,3 +1,5 @@
+import { Plus } from "lucide-react";
+
 /**
  * layout-aware header:
  *  "stack"  — tight, logo only + task count hidden, CTA stays
@@ -10,6 +12,7 @@ export default function BoardHeader({
   layout = "horizontal",
   filterTag,
   onFilterTag,
+  boardName,
 }) {
   const now = new Date();
   const dateStr = now.toLocaleDateString("en-US", {
@@ -19,7 +22,6 @@ export default function BoardHeader({
   });
 
   const isStack = layout === "stack";
-  const isCompact = layout === "stack" || layout === "grid";
   const isWide = layout === "wide";
 
   return (
@@ -50,7 +52,7 @@ export default function BoardHeader({
               isStack ? "text-base" : isWide ? "text-2xl" : "text-xl"
             }`}
           >
-            Kanban
+            {boardName ?? "Kanban"}
           </h1>
           {/* Hide date on stack to save space */}
           {!isStack && (
@@ -115,7 +117,7 @@ export default function BoardHeader({
             ${isStack ? "px-3 py-1.5 text-[12px]" : isWide ? "px-5 py-2.5 text-[14px]" : "px-4 py-2 text-[13px]"}
           `}
         >
-          <span className="text-lg font-light leading-none -mt-px">+</span>
+          <Plus size={14} strokeWidth={2.5} />
           {isStack ? "Task" : "New Task"}
         </button>
       </div>

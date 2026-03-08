@@ -1,5 +1,7 @@
 pub mod connection;
-pub mod cards;
+pub mod card_repo;
+pub mod board_repo;
 
 pub use connection::Database;
-pub use cards::CardsRepo;
+pub use card_repo::CardRepo;
+pub use board_repo::BoardRepo;

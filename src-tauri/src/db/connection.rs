@@ -11,11 +11,11 @@ impl Database {
                 std::io::ErrorKind::NotFound, 
                 "Data directory not found"
             ))?
-            .join("kanban-app");
+            .join("minikan-board");
         
         std::fs::create_dir_all(&app_dir)?;
         
-        let db_path = app_dir.join("kanban.db");
+        let db_path = app_dir.join("minikan.db");
         let db_url = format!("sqlite:{}", db_path.display());
         
         println!("Database path: {}", db_path.display());

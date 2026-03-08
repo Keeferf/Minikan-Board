@@ -12,6 +12,7 @@ import { useState, useCallback, useEffect, useRef } from "react";
 export function useDragAndDrop(onDrop) {
   const [dragging, setDragging] = useState(null); // { cardId, x, y }
   const [dragOverCol, setDragOverCol] = useState(null);
+  const dragOverColRef = useRef(null); // ← ref keeps pointerup stable
   const colRefs = useRef({});
 
   // ── Global move / up listeners (only active during a drag) ────────────
@@ -34,13 +35,16 @@ export function useDragAndDrop(onDrop) {
           break;
         }
       }
+      dragOverColRef.current = found; // ← write ref first, then state
       setDragOverCol(found);
     };
 
     const onPointerUp = () => {
-      if (dragging && dragOverCol) {
-        onDrop(dragging.cardId, dragOverCol);
+      // Read from ref — never stale, even if state update was batched
+      if (dragging && dragOverColRef.current) {
+        onDrop(dragging.cardId, dragOverColRef.current);
       }
+      dragOverColRef.current = null;
       setDragging(null);
       setDragOverCol(null);
     };
@@ -51,7 +55,7 @@ export function useDragAndDrop(onDrop) {
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerup", onPointerUp);
     };
-  }, [dragging, dragOverCol, onDrop]);
+  }, [dragging, onDrop]); // ← dragOverCol removed from deps
 
   // ── Called by a card's onPointerDown ──────────────────────────────────
   const startDrag = useCallback((e, cardId) => {

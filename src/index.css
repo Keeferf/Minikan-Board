@@ -38,7 +38,6 @@
   --animate-fade-in: fadeIn 0.18s ease;
   --animate-slide-up: slideUp 0.22s cubic-bezier(0.22, 1, 0.36, 1);
   --animate-shake: shake 0.35s ease;
-  --animate-pulse-line: pulseLine 0.8s ease infinite;
 
   @keyframes fadeIn {
     from {
@@ -76,15 +75,6 @@
       transform: translateX(4px);
     }
   }
-  @keyframes pulseLine {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.35;
-    }
-  }
 }
 
 @layer base {
@@ -115,13 +105,5 @@
   ::-webkit-scrollbar-thumb {
     background: var(--color-border-medium);
     border-radius: 99px;
-  }
-}
-
-@layer utilities {
-  .dragging {
-    opacity: 0.4;
-    transform: scale(0.97) rotate(-1deg);
-    cursor: grabbing;
   }
 }

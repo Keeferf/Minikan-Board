@@ -4,6 +4,7 @@ use chrono::{DateTime, Utc};
 #[derive(Debug, Serialize, Deserialize, Clone, sqlx::FromRow)]
 pub struct Card {
     pub id: String,
+    pub board_id: String,
     pub title: String,
     pub description: String,
     pub priority: String,
@@ -12,10 +13,10 @@ pub struct Card {
     pub created_at: DateTime<Utc>,
 }
 
-// What frontend sends when creating a card
 #[derive(Debug, Deserialize)]
 pub struct NewCard {
     pub id: String,
+    pub board_id: String,
     pub title: String,
     pub description: Option<String>,
     pub priority: String,

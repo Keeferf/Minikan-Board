@@ -1,3 +1,5 @@
+import { X } from "lucide-react";
+
 const PRIORITY = {
   low: {
     label: "Low",
@@ -113,12 +115,11 @@ export default function KanbanCard({
           aria-label="Delete card"
           className="
             ml-auto w-5 h-5 rounded-full flex items-center justify-center
-            text-base leading-none
             transition-all duration-150
             hover:text-coral hover:bg-coral/10
           "
         >
-          ×
+          <X size={12} strokeWidth={2.5} />
         </button>
       </div>
     </article>

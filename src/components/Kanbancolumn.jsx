@@ -1,4 +1,5 @@
 import KanbanCard from "./Kanbancard";
+import { Plus } from "lucide-react";
 
 /**
  * layout prop:
@@ -76,9 +77,9 @@ export default function KanbanColumn({
 
         <button
           onClick={() => onAddTask(column.id)}
-          className="w-6.5 h-6.5 flex items-center justify-center rounded-sm text-lg font-light text-text-muted bg-card border border-border-subtle transition-all hover:text-teal hover:border-teal hover:bg-teal/10"
+          className="w-6.5 h-6.5 flex items-center justify-center rounded-sm text-text-muted bg-card border border-border-subtle transition-all hover:text-teal hover:border-teal hover:bg-teal/10"
         >
-          +
+          <Plus size={13} strokeWidth={2} />
         </button>
       </header>
 

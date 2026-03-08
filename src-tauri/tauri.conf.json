@@ -1,7 +1,7 @@
 {
-  "productName": "kanban-app",
+  "productName": "minikan-board",
   "version": "0.1.0",
-  "identifier": "com.kanban.app",
+  "identifier": "com.minikan.board",
   "build": {
     "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1420",
@@ -11,8 +11,8 @@
   "app": {
     "windows": [
       {
-        "title": "Kanban Board",
-        "width": 1240,
+        "title": "Minikan Board",
+        "width": 1340,
         "height": 800,
         "minWidth": 380,
         "minHeight": 500,
