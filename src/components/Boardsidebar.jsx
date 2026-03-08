@@ -98,6 +98,7 @@ export default function BoardSidebar({
                   title={board.name}
                 />
               ) : isEditing ? (
+                // Rename flow — teal (editing an existing thing)
                 <div className="flex items-center gap-1.5 w-full">
                   <input
                     autoFocus
@@ -111,13 +112,13 @@ export default function BoardSidebar({
                   />
                   <button
                     onClick={commitEdit}
-                    className="text-teal hover:brightness-125"
+                    className="text-teal hover:brightness-125 transition-all"
                   >
                     <Check size={12} />
                   </button>
                   <button
                     onClick={() => setEditingId(null)}
-                    className="text-text-muted hover:text-text-primary"
+                    className="text-text-muted hover:text-text-primary transition-colors"
                   >
                     <X size={12} />
                   </button>
@@ -157,7 +158,7 @@ export default function BoardSidebar({
         })}
       </div>
 
-      {/* Add board */}
+      {/* Add board — gold to distinguish "create" from "edit" (teal) */}
       {!collapsed && (
         <div className="border-t border-border-subtle p-2">
           {addingNew ? (
@@ -174,11 +175,11 @@ export default function BoardSidebar({
                   }
                 }}
                 placeholder="Board name…"
-                className="flex-1 min-w-0 bg-card border border-teal rounded-sm px-2 py-1 text-[12px] text-text-primary placeholder:text-text-muted focus:outline-none"
+                className="flex-1 min-w-0 bg-card border border-gold rounded-sm px-2 py-1 text-[12px] text-text-primary placeholder:text-text-muted focus:outline-none"
               />
               <button
                 onClick={commitNew}
-                className="text-teal hover:brightness-125"
+                className="text-gold hover:brightness-125 transition-all"
               >
                 <Check size={13} />
               </button>
@@ -187,7 +188,7 @@ export default function BoardSidebar({
                   setAddingNew(false);
                   setNewBoardName("");
                 }}
-                className="text-text-muted hover:text-text-primary"
+                className="text-text-muted hover:text-text-primary transition-colors"
               >
                 <X size={13} />
               </button>
@@ -195,7 +196,7 @@ export default function BoardSidebar({
           ) : (
             <button
               onClick={() => setAddingNew(true)}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-sm text-[12px] font-medium text-text-muted hover:text-text-primary hover:bg-card transition-all duration-150"
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-sm text-[12px] font-medium text-text-muted hover:text-gold hover:bg-gold/5 transition-all duration-150"
             >
               <Plus size={13} />
               New Board

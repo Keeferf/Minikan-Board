@@ -4,14 +4,17 @@ const PRIORITY = {
   low: {
     label: "Low",
     color: "text-text-muted  border-text-muted/30  bg-text-muted/5",
+    hoverBorder: "rgba(82,82,94,0.4)",
   },
   medium: {
     label: "Med",
-    color: "text-gold        border-gold/40        bg-gold/5",
+    color: "text-gold border-gold/40 bg-gold/5",
+    hoverBorder: "rgba(255,186,73,0.35)",
   },
   high: {
     label: "High",
-    color: "text-coral       border-coral/40       bg-coral/5",
+    color: "text-coral border-coral/40 bg-coral/5",
+    hoverBorder: "rgba(239,91,91,0.35)",
   },
 };
 
@@ -20,6 +23,13 @@ const PIP = {
   medium: "bg-gold",
   high: "bg-coral",
 };
+
+// Cycles gold → coral → teal for matched tags so they all feel intentional
+const TAG_MATCH_STYLES = [
+  "text-gold  border-gold/50  bg-gold/10",
+  "text-coral border-coral/50 bg-coral/10",
+  "text-teal  border-teal/50  bg-teal/10",
+];
 
 export default function KanbanCard({
   card,
@@ -34,7 +44,11 @@ export default function KanbanCard({
   return (
     <article
       onPointerDown={(e) => onPointerDown(e, card.id)}
-      style={{ touchAction: "none" }}
+      style={{
+        touchAction: "none",
+        // Priority-tinted hover border via CSS custom property
+        "--hover-border": p.hoverBorder,
+      }}
       className={`
         relative group
         bg-card border border-border-subtle rounded-md
@@ -44,7 +58,7 @@ export default function KanbanCard({
         ${
           isDragging
             ? "opacity-40 scale-[0.97] border-dashed"
-            : "hover:bg-card-hover hover:border-border-medium hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
+            : "hover:bg-card-hover hover:[border-(--hover-border)] hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
         }
       `}
     >
@@ -88,20 +102,18 @@ export default function KanbanCard({
           {p.label}
         </span>
 
-        {card.tags?.map((tag) => {
+        {card.tags?.map((tag, i) => {
           const isMatch =
             activeTag && tag.toLowerCase().includes(activeTag.toLowerCase());
+          // Cycle through brand colors for matched tags
+          const matchStyle = TAG_MATCH_STYLES[i % TAG_MATCH_STYLES.length];
           return (
             <span
               key={tag}
               className={`
                 font-mono text-[10px] uppercase tracking-widest rounded px-1.5 py-0.5 border
                 transition-colors duration-150
-                ${
-                  isMatch
-                    ? "text-teal border-teal/50 bg-teal/10"
-                    : "text-text-muted border-border-subtle bg-white/3"
-                }
+                ${isMatch ? matchStyle : "text-text-muted border-border-subtle bg-white/3"}
               `}
             >
               {tag}

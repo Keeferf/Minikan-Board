@@ -23,35 +23,41 @@ export default function KanbanColumn({
   const isStack = layout === "stack";
   const isWide = layout === "wide";
 
-  // Width: stack & grid fill their container; horizontal/wide flex fluidly
-  // min-w sets the point at which a scrollbar appears rather than clipping
   const widthClass =
     layout === "horizontal" || layout === "wide"
       ? "flex-1 min-w-[220px]"
-      : "w-full"; // stack & grid
+      : "w-full";
 
-  // In grid/horizontal/wide the column scrolls internally only when it has room
   const scrollClass = isStack ? "" : "overflow-y-auto max-h-[60vh]";
-
-  // Padding scales up slightly on wide
   const headerPad = isWide ? "px-5 py-4" : isStack ? "px-3 py-3" : "px-4 py-4";
   const bodyPad = isWide ? "p-4" : "p-3";
   const minEmpty = isWide ? "min-h-28" : "min-h-20";
 
+  // Inline styles for the dynamic column color so Tailwind doesn't need to
+  // generate arbitrary color classes at runtime
+  const dragOverStyle = isDragOver
+    ? {
+        borderColor: column.color,
+        backgroundColor: `${column.color}0d`, // ~5% opacity
+        boxShadow: `0 0 20px ${column.color}33`, // ~20% opacity glow
+      }
+    : {};
+
+  const addBtnHoverStyle = {
+    "--col-color": column.color,
+  };
+
   return (
     <section
       ref={colRef}
+      style={dragOverStyle}
       className={`
         flex flex-col
         bg-surface border-2 rounded-lg overflow-hidden
         transition-all duration-200
         ${widthClass}
         ${isStack ? "" : "min-h-80"}
-        ${
-          isDragOver
-            ? "border-teal bg-teal/5 shadow-[0_0_20px_rgba(32,163,158,0.2)]"
-            : "border-border-subtle"
-        }
+        ${isDragOver ? "" : "border-border-subtle"}
       `}
     >
       {/* Header */}
@@ -70,14 +76,25 @@ export default function KanbanColumn({
           >
             {column.label}
           </h3>
-          <span className="font-mono text-[11px] text-text-muted bg-card border border-border-subtle rounded-full px-1.5 py-px">
+          <span
+            className="font-mono text-[11px] text-text-muted bg-card border border-border-subtle rounded-full px-1.5 py-px transition-colors duration-150"
+            style={isDragOver ? { color: column.color } : {}}
+          >
             {cards.length}
           </span>
         </div>
 
+        {/* Add button — hover color matches the column */}
         <button
           onClick={() => onAddTask(column.id)}
-          className="w-6.5 h-6.5 flex items-center justify-center rounded-sm text-text-muted bg-card border border-border-subtle transition-all hover:text-teal hover:border-teal hover:bg-teal/10"
+          style={addBtnHoverStyle}
+          className="
+            w-6.5 h-6.5 flex items-center justify-center rounded-sm
+            text-text-muted bg-card border border-border-subtle
+            transition-all duration-150
+            hover:border-(--col-color)
+            hover:[background:color-mix(in_srgb,var(--col-color)_10%,transparent)]
+          "
         >
           <Plus size={13} strokeWidth={2} />
         </button>
@@ -96,11 +113,21 @@ export default function KanbanColumn({
           <div
             className={`
               ${minEmpty} flex items-center justify-center
-              border-2 border-dashed rounded-md transition-colors
-              ${isDragOver ? "border-teal bg-teal/10" : "border-border-subtle"}
+              border-2 border-dashed rounded-md transition-all duration-200
             `}
+            style={
+              isDragOver
+                ? {
+                    borderColor: column.color,
+                    backgroundColor: `${column.color}1a`,
+                  }
+                : {}
+            }
           >
-            <span className="font-mono text-[11px] text-text-muted">
+            <span
+              className="font-mono text-[11px] text-text-muted transition-colors duration-150"
+              style={isDragOver ? { color: column.color } : {}}
+            >
               {isDragOver ? "⬇ Drop here" : "Drop tasks here"}
             </span>
           </div>

@@ -77,7 +77,7 @@ export default function BoardHeader({
                 bg-surface border border-border-subtle rounded-sm
                 pl-3 pr-7 py-1.5 font-mono text-[11px] text-text-primary
                 placeholder:text-text-muted
-                focus:outline-none focus:border-teal
+                focus:outline-none focus:border-gold
                 transition-colors duration-150
                 ${isWide ? "w-44" : "w-36"}
               `}
@@ -99,9 +99,7 @@ export default function BoardHeader({
         {/* Hide task count on stack */}
         {!isStack && (
           <span className="font-mono text-xs text-text-muted">
-            <strong className="text-text-secondary font-medium">
-              {totalCards}
-            </strong>{" "}
+            <strong className="text-gold font-medium">{totalCards}</strong>{" "}
             tasks
           </span>
         )}
