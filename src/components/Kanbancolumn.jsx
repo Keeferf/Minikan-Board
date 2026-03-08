@@ -1,89 +1,134 @@
-import { useState } from "react";
-import KanbanCard from "./KanbanCard";
+import KanbanCard from "./Kanbancard";
+import { Plus } from "lucide-react";
 
+/**
+ * layout prop:
+ *  "stack"      — full-width, no internal scroll (outer page scrolls)
+ *  "grid"       — full cell of a 2×2 grid, internal scroll
+ *  "horizontal" — fixed w-70, internal scroll
+ *  "wide"       — fixed w-84, internal scroll, slightly roomier padding
+ */
 export default function KanbanColumn({
   column,
   cards,
   onAddTask,
   onDeleteCard,
-  onDragStart,
-  onDrop,
+  onPointerDown,
+  isDragOver,
+  draggingCardId,
+  colRef,
+  layout = "horizontal",
+  activeTag = "",
 }) {
-  const [isDragOver, setIsDragOver] = useState(false);
+  const isStack = layout === "stack";
+  const isWide = layout === "wide";
 
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-    setIsDragOver(true);
-  };
+  const widthClass =
+    layout === "horizontal" || layout === "wide"
+      ? "flex-1 min-w-[220px]"
+      : "w-full";
 
-  const handleDragLeave = (e) => {
-    if (!e.currentTarget.contains(e.relatedTarget)) setIsDragOver(false);
-  };
+  const scrollClass = isStack ? "" : "flex-1 min-h-0 overflow-y-auto";
+  const headerPad = isWide ? "px-5 py-4" : isStack ? "px-3 py-3" : "px-4 py-4";
+  const bodyPad = isWide ? "p-4" : "p-3";
+  const minEmpty = isWide ? "min-h-28" : "min-h-20";
 
-  const handleDrop = (e) => {
-    e.preventDefault();
-    setIsDragOver(false);
-    onDrop(column.id);
+  // Inline styles for the dynamic column color so Tailwind doesn't need to
+  // generate arbitrary color classes at runtime
+  const dragOverStyle = isDragOver
+    ? {
+        borderColor: column.color,
+        backgroundColor: `${column.color}0d`, // ~5% opacity
+        boxShadow: `0 0 20px ${column.color}33`, // ~20% opacity glow
+      }
+    : {};
+
+  const addBtnHoverStyle = {
+    "--col-color": column.color,
   };
 
   return (
     <section
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
+      ref={colRef}
+      style={dragOverStyle}
       className={`
-        flex-none w-[280px] flex flex-col max-h-full
-        bg-surface border rounded-lg overflow-hidden
+        flex flex-col
+        bg-surface border-2 rounded-lg
         transition-all duration-200
-        ${
-          isDragOver
-            ? "border-teal shadow-[0_0_0_1px_#20a39e,inset_0_0_24px_rgba(32,163,158,0.05)]"
-            : "border-border-subtle"
-        }
+        ${widthClass}
+        ${isStack ? "" : "min-h-80"}
+        ${isDragOver ? "" : "border-border-subtle"}
       `}
     >
-      {/* Column header */}
-      <header className="flex items-center justify-between px-4 py-4 border-b border-border-subtle flex-shrink-0">
+      {/* Header */}
+      <header
+        className={`flex items-center justify-between border-b border-border-subtle shrink-0 ${headerPad}`}
+      >
         <div className="flex items-center gap-2">
-          {/* Colored dot */}
           <span
-            className="w-2 h-2 rounded-full flex-shrink-0"
+            className="w-2 h-2 rounded-full shrink-0"
             style={{ background: column.color }}
           />
-          <h3 className="text-[12px] font-extrabold uppercase tracking-[0.08em] text-text-primary">
+          <h3
+            className={`font-extrabold uppercase tracking-[0.08em] text-text-primary ${
+              isWide ? "text-[13px]" : "text-[12px]"
+            }`}
+          >
             {column.label}
           </h3>
-          <span className="font-mono text-[11px] text-text-muted bg-card border border-border-subtle rounded-full px-1.5 py-px leading-relaxed">
+          <span
+            className="font-mono text-[11px] text-text-muted bg-card border border-border-subtle rounded-full px-1.5 py-px transition-colors duration-150"
+            style={isDragOver ? { color: column.color } : {}}
+          >
             {cards.length}
           </span>
         </div>
 
+        {/* Add button — hover color matches the column */}
         <button
           onClick={() => onAddTask(column.id)}
-          aria-label={`Add task to ${column.label}`}
+          style={addBtnHoverStyle}
           className="
-            w-[26px] h-[26px] flex items-center justify-center rounded-sm
-            text-lg font-light text-text-muted bg-card border border-border-subtle
+            w-6.5 h-6.5 flex items-center justify-center rounded-sm
+            text-text-muted bg-card border border-border-subtle
             transition-all duration-150
-            hover:text-teal hover:border-teal hover:bg-teal/10
+            hover:[text-(--col-color)] hover:[border-(--col-color)]
+            hover:[background:color-mix(in_srgb,var(--col-color)_10%,transparent)]
           "
         >
-          +
+          <Plus size={13} strokeWidth={2} />
         </button>
       </header>
 
-      {/* Drop pulse indicator */}
-      {isDragOver && (
-        <div className="h-0.5 mx-4 mt-1.5 bg-teal rounded-full animate-pulse-line flex-shrink-0" />
-      )}
-
       {/* Cards */}
-      <div className="flex-1 overflow-y-auto p-3 flex flex-col gap-2">
+      <div
+        className={`
+          flex flex-col gap-2
+          ${bodyPad}
+          ${scrollClass}
+          ${isStack ? "" : "min-h-25"}
+        `}
+      >
         {cards.length === 0 ? (
-          <div className="flex-1 min-h-[80px] flex items-center justify-center border border-dashed border-border-subtle rounded-md my-1">
-            <span className="font-mono text-[11px] text-text-muted tracking-wider">
-              Drop tasks here
+          <div
+            className={`
+              ${minEmpty} flex items-center justify-center
+              border-2 border-dashed rounded-md transition-all duration-200
+            `}
+            style={
+              isDragOver
+                ? {
+                    borderColor: column.color,
+                    backgroundColor: `${column.color}1a`,
+                  }
+                : {}
+            }
+          >
+            <span
+              className="font-mono text-[11px] text-text-muted transition-colors duration-150"
+              style={isDragOver ? { color: column.color } : {}}
+            >
+              {isDragOver ? "⬇ Drop here" : "Drop tasks here"}
             </span>
           </div>
         ) : (
@@ -92,7 +137,10 @@ export default function KanbanColumn({
               key={card.id}
               card={card}
               onDelete={onDeleteCard}
-              onDragStart={onDragStart}
+              onPointerDown={onPointerDown}
+              isDragging={card.id === draggingCardId}
+              isWide={isWide}
+              activeTag={activeTag}
             />
           ))
         )}

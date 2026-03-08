@@ -1,139 +1,217 @@
-import { useState, useCallback, useRef } from "react";
-import KanbanColumn from "./Kanbancolumn.jsx";
-import BoardHeader from "./BoardHeader";
-import AddTaskModal from "./Addtaskmodal.jsx";
+import { useState, useCallback, useEffect } from "react";
+import { invoke } from "@tauri-apps/api/core";
+import KanbanColumn from "./Kanbancolumn";
+import BoardHeader from "./Boardheader";
+import AddTaskModal from "./Addtaskmodal";
+import BoardSidebar from "./Boardsidebar";
+import { COLUMNS } from "../lib/kanbanConstants";
+import { useCards } from "../hooks/useCards";
+import { useDragAndDrop } from "../hooks/useDragAndDrop";
+import { useWindowWidth } from "../hooks/useWindowWidth";
+import { nanoid } from "nanoid";
 
-const COLUMNS = [
-  { id: "todo", label: "To Do", color: "#52525e" },
-  { id: "progress", label: "In Progress", color: "#ffba49" },
-  { id: "review", label: "Review", color: "#20a39e" },
-  { id: "done", label: "Done", color: "#ef5b5b" },
-];
-
-const SEED_CARDS = [
-  {
-    id: "c1",
-    title: "Set up Tauri project scaffolding",
-    description: "Init Vite + React + Tauri and verify builds.",
-    priority: "high",
-    column: "done",
-    tags: ["setup"],
-  },
-  {
-    id: "c2",
-    title: "Design system & color tokens",
-    description: "Define CSS variables from brand guide.",
-    priority: "medium",
-    column: "done",
-    tags: ["design"],
-  },
-  {
-    id: "c3",
-    title: "Build Kanban board UI",
-    description: "Modular components with DnD support.",
-    priority: "high",
-    column: "progress",
-    tags: ["ui"],
-  },
-  {
-    id: "c4",
-    title: "Wire up drag-and-drop",
-    description: "HTML5 DnD API between columns.",
-    priority: "medium",
-    column: "progress",
-    tags: ["ui", "dnd"],
-  },
-  {
-    id: "c5",
-    title: "Persist board state to disk",
-    description: "Use Tauri fs plugin for JSON storage.",
-    priority: "medium",
-    column: "review",
-    tags: ["tauri"],
-  },
-  {
-    id: "c6",
-    title: "Add keyboard shortcuts",
-    description: "n = new task, Esc = close modal.",
-    priority: "low",
-    column: "todo",
-    tags: ["a11y"],
-  },
-  {
-    id: "c7",
-    title: "System tray integration",
-    description: "Quick-add task from tray menu.",
-    priority: "low",
-    column: "todo",
-    tags: ["tauri"],
-  },
-];
-
-let nextId = 100;
+function getLayout(width) {
+  if (width < 640) return "stack";
+  if (width < 1100) return "grid";
+  if (width < 1600) return "horizontal";
+  return "wide";
+}
 
 export default function KanbanBoard() {
-  const [cards, setCards] = useState(SEED_CARDS);
+  // ── Boards state ──────────────────────────────────────────────────────
+  const [boards, setBoards] = useState([]);
+  const [activeBoardId, setActiveBoardId] = useState(null);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [boardsLoading, setBoardsLoading] = useState(true);
+
+  useEffect(() => {
+    invoke("get_boards").then((data) => {
+      setBoards(data);
+      if (data.length > 0) setActiveBoardId(data[0].id);
+      setBoardsLoading(false);
+    });
+  }, []);
+
+  const handleAddBoard = useCallback(async (name) => {
+    const board = await invoke("add_board", { board: { id: nanoid(), name } });
+    setBoards((prev) => [...prev, board]);
+    setActiveBoardId(board.id);
+  }, []);
+
+  const handleRenameBoard = useCallback(async (id, name) => {
+    await invoke("rename_board", { id, name });
+    setBoards((prev) => prev.map((b) => (b.id === id ? { ...b, name } : b)));
+  }, []);
+
+  const handleDeleteBoard = useCallback(
+    async (id) => {
+      try {
+        await invoke("delete_board", { id });
+        setBoards((prev) => {
+          const next = prev.filter((b) => b.id !== id);
+          if (activeBoardId === id && next.length > 0) {
+            setActiveBoardId(next[0].id);
+          }
+          return next;
+        });
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    [activeBoardId],
+  );
+
+  // ── Cards state (scoped to active board) ──────────────────────────────
+  const { cards, loading, addCard, deleteCard, moveCard } =
+    useCards(activeBoardId);
+  const { dragging, dragOverCol, startDrag, registerCol } =
+    useDragAndDrop(moveCard);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [modalColumn, setModalColumn] = useState("todo");
-  const dragCardId = useRef(null);
+  const [filterTag, setFilterTag] = useState("");
+
+  const width = useWindowWidth();
+  const sidebarWidth = sidebarCollapsed ? 48 : 208;
+  const availableWidth = width - sidebarWidth;
+  const layout = getLayout(availableWidth);
 
   const openAddModal = useCallback((colId = "todo") => {
     setModalColumn(colId);
     setModalOpen(true);
   }, []);
 
-  const handleAddCard = useCallback((data) => {
-    setCards((prev) => [...prev, { id: `c${nextId++}`, ...data }]);
-  }, []);
+  const cardsByColumn = (colId) => {
+    const query = filterTag.trim().toLowerCase();
+    return cards
+      .filter((c) => c.column === colId)
+      .filter((c) =>
+        query ? c.tags?.some((t) => t.toLowerCase().includes(query)) : true,
+      );
+  };
 
-  const handleDeleteCard = useCallback((cardId) => {
-    setCards((prev) => prev.filter((c) => c.id !== cardId));
-  }, []);
+  const draggingCard = dragging
+    ? cards.find((c) => c.id === dragging.cardId)
+    : null;
+  const activeBoard = boards.find((b) => b.id === activeBoardId);
 
-  const handleDragStart = useCallback((e, cardId) => {
-    dragCardId.current = cardId;
-  }, []);
+  const renderColumn = (col) => (
+    <KanbanColumn
+      key={col.id}
+      column={col}
+      cards={cardsByColumn(col.id)}
+      onAddTask={openAddModal}
+      onDeleteCard={deleteCard}
+      onPointerDown={startDrag}
+      isDragOver={dragOverCol === col.id}
+      draggingCardId={dragging?.cardId}
+      colRef={registerCol(col.id)}
+      layout={layout}
+      activeTag={filterTag.trim().toLowerCase()}
+    />
+  );
 
-  const handleDrop = useCallback((targetColId) => {
-    if (!dragCardId.current) return;
-    setCards((prev) =>
-      prev.map((c) =>
-        c.id === dragCardId.current ? { ...c, column: targetColId } : c,
-      ),
+  if (boardsLoading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-base">
+        <span className="font-mono text-sm text-text-muted animate-pulse">
+          Loading…
+        </span>
+      </div>
     );
-    dragCardId.current = null;
-  }, []);
-
-  const cardsByColumn = (colId) => cards.filter((c) => c.column === colId);
+  }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-base">
-      <BoardHeader
-        totalCards={cards.length}
-        onNewTask={() => openAddModal("todo")}
+    <div
+      className="flex h-screen bg-base overflow-hidden"
+      style={{ userSelect: dragging ? "none" : undefined }}
+    >
+      {/* Sidebar */}
+      <BoardSidebar
+        boards={boards}
+        activeBoardId={activeBoardId}
+        onSelectBoard={(id) => {
+          setActiveBoardId(id);
+          setFilterTag("");
+        }}
+        onAddBoard={handleAddBoard}
+        onRenameBoard={handleRenameBoard}
+        onDeleteBoard={handleDeleteBoard}
+        collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed((v) => !v)}
       />
 
-      <div className="flex-1 flex gap-4 px-7 py-5 overflow-x-auto overflow-y-hidden items-start">
-        {COLUMNS.map((col) => (
-          <KanbanColumn
-            key={col.id}
-            column={col}
-            cards={cardsByColumn(col.id)}
-            onAddTask={openAddModal}
-            onDeleteCard={handleDeleteCard}
-            onDragStart={handleDragStart}
-            onDrop={handleDrop}
-          />
-        ))}
-      </div>
-
-      {modalOpen && (
-        <AddTaskModal
-          defaultColumn={modalColumn}
-          onAdd={handleAddCard}
-          onClose={() => setModalOpen(false)}
+      {/* Main content */}
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        <BoardHeader
+          totalCards={cards.length}
+          onNewTask={() => openAddModal("todo")}
+          layout={layout}
+          filterTag={filterTag}
+          onFilterTag={setFilterTag}
+          boardName={activeBoard?.name}
         />
-      )}
+
+        {loading ? (
+          <div className="flex-1 flex items-center justify-center">
+            <span className="font-mono text-sm text-text-muted animate-pulse">
+              Loading…
+            </span>
+          </div>
+        ) : layout === "stack" ? (
+          <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 flex flex-col gap-3">
+            {COLUMNS.map(renderColumn)}
+          </div>
+        ) : layout === "grid" ? (
+          <div className="flex-1 min-h-0 overflow-y-auto p-3">
+            <div className="grid grid-cols-2 gap-3 min-h-full">
+              {COLUMNS.map(renderColumn)}
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 min-h-0 px-7 py-5 overflow-x-auto overflow-y-auto">
+            <div className="flex gap-4 h-full w-full">
+              {COLUMNS.map(renderColumn)}
+            </div>
+          </div>
+        )}
+
+        {/* Drag ghost */}
+        {dragging && draggingCard && (
+          <div
+            id="drag-ghost"
+            style={{
+              position: "fixed",
+              left: dragging.x + 14,
+              top: dragging.y - 18,
+              width: layout === "wide" ? 316 : 272,
+              pointerEvents: "none",
+              zIndex: 9999,
+              opacity: 0.88,
+              transform: "rotate(2deg)",
+            }}
+            className="bg-card border border-teal rounded-md px-3.5 pt-3.5 pb-2.5 shadow-[0_20px_48px_rgba(0,0,0,0.55)]"
+          >
+            <p className="text-[13.5px] font-semibold text-text-primary leading-snug truncate">
+              {draggingCard.title}
+            </p>
+            {draggingCard.description && (
+              <p className="mt-1 font-mono text-xs text-text-secondary leading-relaxed line-clamp-2">
+                {draggingCard.description}
+              </p>
+            )}
+          </div>
+        )}
+
+        {modalOpen && (
+          <AddTaskModal
+            defaultColumn={modalColumn}
+            onAdd={(card) => addCard({ ...card, board_id: activeBoardId })}
+            onClose={() => setModalOpen(false)}
+            layout={layout}
+          />
+        )}
+      </div>
     </div>
   );
 }

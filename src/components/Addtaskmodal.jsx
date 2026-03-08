@@ -1,11 +1,6 @@
 import { useState, useEffect } from "react";
-
-const COLUMNS = [
-  { id: "todo", label: "To Do" },
-  { id: "progress", label: "In Progress" },
-  { id: "review", label: "Review" },
-  { id: "done", label: "Done" },
-];
+import { X, ChevronDown, Plus } from "lucide-react";
+import { COLUMNS } from "../lib/kanbanConstants"; // ← shared source of truth
 
 const PRIORITY_STYLES = {
   active: {
@@ -16,7 +11,12 @@ const PRIORITY_STYLES = {
   idle: "text-text-muted border-border-subtle bg-surface hover:text-text-primary hover:border-border-medium",
 };
 
-export default function AddTaskModal({ defaultColumn, onAdd, onClose }) {
+export default function AddTaskModal({
+  defaultColumn,
+  onAdd,
+  onClose,
+  layout = "horizontal",
+}) {
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [priority, setPriority] = useState("medium");
@@ -40,16 +40,27 @@ export default function AddTaskModal({ defaultColumn, onAdd, onClose }) {
     }
     onAdd({
       title: title.trim(),
-      description: desc.trim(),
+      description: desc.trim() || null,
       priority,
       column,
-      tags: tags
-        .split(",")
-        .map((t) => t.trim())
-        .filter(Boolean),
+      // Join back to a comma-separated string to match Rust's Option<String>
+      tags:
+        tags
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean)
+          .join(",") || null,
     });
     onClose();
   };
+
+  // Modal width scales with layout
+  const modalWidth =
+    layout === "stack"
+      ? "w-[calc(100vw-2rem)]"
+      : layout === "wide"
+        ? "w-[520px]"
+        : "w-[460px]";
 
   const inputBase = `
     w-full bg-surface border border-border-subtle rounded-sm
@@ -60,69 +71,73 @@ export default function AddTaskModal({ defaultColumn, onAdd, onClose }) {
   `;
 
   const Label = ({ children }) => (
-    <label className="block text-[10.5px] font-bold uppercase tracking-[0.08em] text-text-muted mt-2.5 mb-1.5 first:mt-0">
+    <label className="block text-[10.5px] font-bold uppercase tracking-[0.08em] text-text-muted mb-1.5">
       {children}
     </label>
   );
 
   return (
     <div
-      className="fixed inset-0 bg-black/65 backdrop-blur-md flex items-center justify-center z-[1000] animate-fade-in"
+      className="fixed inset-0 bg-black/65 backdrop-blur-md flex items-center justify-center z-1000 animate-fade-in"
       onClick={(e) => e.target === e.currentTarget && onClose()}
     >
-      <div className="w-[460px] max-w-[calc(100vw-2rem)] bg-modal border border-border-medium rounded-lg overflow-hidden shadow-[0_32px_80px_rgba(0,0,0,0.6)] animate-slide-up">
+      <div
+        className={`
+          ${modalWidth} max-w-[calc(100vw-2rem)]
+          bg-modal border border-border-medium rounded-lg overflow-hidden
+          shadow-[0_32px_80px_rgba(0,0,0,0.6)] animate-slide-up
+        `}
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-border-subtle">
-          <h2 className="text-base font-extrabold tracking-tight text-text-primary">
+          <h2 className=" font-extrabold tracking-tight text-text-bright">
             New Task
           </h2>
           <button
             onClick={onClose}
-            className="w-7 h-7 rounded-full flex items-center justify-center text-xl text-text-muted transition-all duration-150 hover:text-text-primary hover:bg-border-subtle"
+            className="w-7 h-7 rounded-full flex items-center justify-center text-text-muted transition-all duration-150 hover:text-text-primary hover:bg-border-subtle"
           >
-            ×
+            <X size={15} strokeWidth={2.5} />
           </button>
         </div>
 
-        {/* Body */}
-        <div className="px-6 py-5 flex flex-col">
-          <Label>Title</Label>
-          <input
-            className={`${inputBase} ${shake ? "animate-shake !border-coral" : ""}`}
-            placeholder="What needs to be done?"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            autoFocus
-          />
+        {/* Body — every field is a <div> so gap-4 drives all spacing uniformly */}
+        <div className="px-6 py-5 flex flex-col gap-4">
+          <div>
+            <Label>Title</Label>
+            <input
+              className={`${inputBase} ${shake ? "animate-shake border-coral!" : ""}`}
+              placeholder="What needs to be done?"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
+              autoFocus
+            />
+          </div>
 
-          <Label>
-            Description{" "}
-            <span className="normal-case tracking-normal font-normal">
-              (optional)
-            </span>
-          </Label>
-          <textarea
-            className={`${inputBase} resize-none`}
-            placeholder="Add more context…"
-            value={desc}
-            onChange={(e) => setDesc(e.target.value)}
-            rows={3}
-          />
+          <div>
+            <Label>
+              Description{" "}
+              <span className="normal-case tracking-normal font-normal">
+                (optional)
+              </span>
+            </Label>
+            <textarea
+              className={`${inputBase} resize-none`}
+              placeholder="Add more context…"
+              value={desc}
+              onChange={(e) => setDesc(e.target.value)}
+              rows={layout === "wide" ? 4 : 3}
+            />
+          </div>
 
-          {/* Column + Priority */}
-          <div className="grid grid-cols-2 gap-4 mt-2">
-            <div>
-              <Label>Column</Label>
+          <div>
+            <Label>Column</Label>
+            <div className="relative">
               <select
                 value={column}
                 onChange={(e) => setColumn(e.target.value)}
                 className={`${inputBase} appearance-none cursor-pointer pr-8`}
-                style={{
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a8a96' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E")`,
-                  backgroundRepeat: "no-repeat",
-                  backgroundPosition: "right 10px center",
-                }}
               >
                 {COLUMNS.map((c) => (
                   <option
@@ -134,54 +149,63 @@ export default function AddTaskModal({ defaultColumn, onAdd, onClose }) {
                   </option>
                 ))}
               </select>
-            </div>
-
-            <div>
-              <Label>Priority</Label>
-              <div className="flex gap-1.5">
-                {["low", "medium", "high"].map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setPriority(p)}
-                    className={`
-                      flex-1 py-2.5 rounded-sm text-[11px] font-bold uppercase tracking-widest border
-                      transition-all duration-150
-                      ${priority === p ? PRIORITY_STYLES.active[p] : PRIORITY_STYLES.idle}
-                    `}
-                  >
-                    {p}
-                  </button>
-                ))}
-              </div>
+              <ChevronDown
+                size={13}
+                strokeWidth={2}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted pointer-events-none"
+              />
             </div>
           </div>
 
-          <Label>
-            Tags{" "}
-            <span className="normal-case tracking-normal font-normal">
-              (comma-separated)
-            </span>
-          </Label>
-          <input
-            className={inputBase}
-            placeholder="design, backend, ux"
-            value={tags}
-            onChange={(e) => setTags(e.target.value)}
-          />
+          <div>
+            <Label>Priority</Label>
+            <div className="flex gap-1.5">
+              {["low", "medium", "high"].map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setPriority(p)}
+                  className={`
+                    flex-1 pt-2 pb-2 rounded-sm text-[11px] font-bold uppercase tracking-wide border
+                    flex items-center justify-center leading-none
+                    transition-all duration-150 min-w-0 overflow-hidden
+                    ${priority === p ? PRIORITY_STYLES.active[p] : PRIORITY_STYLES.idle}
+                  `}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <Label>
+              Tags{" "}
+              <span className="normal-case tracking-normal font-normal">
+                (comma-separated)
+              </span>
+            </Label>
+            <input
+              className={inputBase}
+              placeholder="design, backend, ux"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+            />
+          </div>
         </div>
 
         {/* Footer */}
         <div className="flex gap-2.5 justify-end px-6 py-4 border-t border-border-subtle">
           <button
             onClick={onClose}
-            className="px-[18px] py-2 rounded-sm text-[13px] font-semibold text-text-secondary bg-surface border border-border-subtle transition-all duration-150 hover:text-text-primary hover:border-border-medium"
+            className="px-4.5 py-2 rounded-sm text-[13px] font-semibold text-text-secondary bg-surface border border-border-subtle transition-all duration-150 hover:text-text-primary hover:border-border-medium"
           >
             Cancel
           </button>
           <button
             onClick={handleSubmit}
-            className="px-6 py-2 rounded-sm text-[13px] font-bold text-[#0a0a0c] bg-teal transition-all duration-150 hover:brightness-110 hover:-translate-y-px active:translate-y-0"
+            className="flex items-center gap-1.5 px-6 py-2 rounded-sm text-[13px] font-bold text-[#0a0a0c] bg-teal transition-all duration-150 hover:brightness-110 hover:-translate-y-px active:translate-y-0"
           >
+            <Plus size={14} strokeWidth={2.5} />
             Add Task
           </button>
         </div>
