@@ -22,8 +22,8 @@ Minikan Board is a native desktop Kanban app built with Tauri and React. Tasks a
 
 ## Screenshot
 
-> _Add a screenshot or screen recording here once the app is built._
-> `docs/screenshot.png`
+![Minikan Board](./docs/empty-minikan-sample.png)
+![Minikan Board](./docs/min-minikan-sample.png)
 
 ---
 
