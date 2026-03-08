@@ -24,6 +24,7 @@ export default function KanbanCard({
   onDelete,
   onPointerDown,
   isDragging,
+  isWide = false,
 }) {
   const p = PRIORITY[card.priority] ?? PRIORITY.low;
 
@@ -34,9 +35,9 @@ export default function KanbanCard({
       className={`
         relative group
         bg-card border border-border-subtle rounded-md
-        px-3.5 pt-3.5 pb-2.5
         cursor-grab select-none
         transition-all duration-200
+        ${isWide ? "px-4 pt-4 pb-3" : "px-3.5 pt-3.5 pb-2.5"}
         ${
           isDragging
             ? "opacity-40 scale-[0.97] border-dashed"
@@ -58,11 +59,19 @@ export default function KanbanCard({
 
       {/* Title + desc */}
       <div className="mb-2.5">
-        <p className="text-[13.5px] font-semibold text-text-primary leading-snug tracking-[0.01em]">
+        <p
+          className={`font-semibold text-text-primary leading-snug tracking-[0.01em] ${
+            isWide ? "text-[14px]" : "text-[13.5px]"
+          }`}
+        >
           {card.title}
         </p>
         {card.description && (
-          <p className="mt-1 font-mono text-xs text-text-secondary leading-relaxed">
+          <p
+            className={`mt-1 font-mono text-text-secondary leading-relaxed ${
+              isWide ? "text-[11.5px]" : "text-xs"
+            }`}
+          >
             {card.description}
           </p>
         )}
@@ -85,7 +94,6 @@ export default function KanbanCard({
           </span>
         ))}
 
-        {/* Stop propagation so clicking delete doesn't start a drag */}
         <button
           onPointerDown={(e) => e.stopPropagation()}
           onClick={() => onDelete(card.id)}

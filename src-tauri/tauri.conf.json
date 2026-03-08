@@ -14,8 +14,8 @@
         "title": "Kanban Board",
         "width": 1240,
         "height": 800,
-        "minWidth": 1100,
-        "minHeight": 600,
+        "minWidth": 380,
+        "minHeight": 500,
         "resizable": true,
         "fullscreen": false,
         "center": true

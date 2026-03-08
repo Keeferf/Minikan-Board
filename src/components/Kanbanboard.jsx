@@ -7,8 +7,19 @@ import { useCards } from "../hooks/useCards";
 import { useDragAndDrop } from "../hooks/useDragAndDrop";
 import { useWindowWidth } from "../hooks/useWindowWidth";
 
-// 4 columns × 280px + 3 gaps × 16px + 2 × 28px padding
-const HORIZONTAL_BREAKPOINT = 1200;
+/**
+ * Layout breakpoints:
+ *  "stack"      < 640px   — 1-col vertical stack, page scrolls
+ *  "grid"       640–1100  — 2×2 grid, each cell scrolls independently
+ *  "horizontal" 1100–1600 — 4-col side-by-side, standard width (w-70)
+ *  "wide"       > 1600    — 4-col side-by-side, wider columns (w-84)
+ */
+function getLayout(width) {
+  if (width < 640) return "stack";
+  if (width < 1100) return "grid";
+  if (width < 1600) return "horizontal";
+  return "wide";
+}
 
 export default function KanbanBoard() {
   const { cards, loading, addCard, deleteCard, moveCard } = useCards();
@@ -19,7 +30,7 @@ export default function KanbanBoard() {
   const [modalColumn, setModalColumn] = useState("todo");
 
   const width = useWindowWidth();
-  const isVertical = width < HORIZONTAL_BREAKPOINT;
+  const layout = getLayout(width);
 
   const openAddModal = useCallback((colId = "todo") => {
     setModalColumn(colId);
@@ -31,15 +42,31 @@ export default function KanbanBoard() {
     ? cards.find((c) => c.id === dragging.cardId)
     : null;
 
+  // ── Shared column renderer ────────────────────────────────────────────────
+  const renderColumn = (col) => (
+    <KanbanColumn
+      key={col.id}
+      column={col}
+      cards={cardsByColumn(col.id)}
+      onAddTask={openAddModal}
+      onDeleteCard={deleteCard}
+      onPointerDown={startDrag}
+      isDragOver={dragOverCol === col.id}
+      draggingCardId={dragging?.cardId}
+      colRef={registerCol(col.id)}
+      layout={layout}
+    />
+  );
+
   return (
     <div
-      className={`flex flex-col bg-base ${isVertical ? "min-h-screen" : "h-screen overflow-hidden"}`}
+      className="flex flex-col bg-base min-h-screen h-screen overflow-y-auto"
       style={{ userSelect: dragging ? "none" : undefined }}
     >
       <BoardHeader
         totalCards={cards.length}
         onNewTask={() => openAddModal("todo")}
-        isCompact={isVertical}
+        layout={layout}
       />
 
       {loading ? (
@@ -48,44 +75,26 @@ export default function KanbanBoard() {
             Loading…
           </span>
         </div>
-      ) : isVertical ? (
-        // ── Vertical layout — columns stack, page scrolls as one unit ────
-        <div className="flex-1 overflow-y-auto px-3 py-3 flex flex-col gap-3">
-          {COLUMNS.map((col) => (
-            <KanbanColumn
-              key={col.id}
-              column={col}
-              cards={cardsByColumn(col.id)}
-              onAddTask={openAddModal}
-              onDeleteCard={deleteCard}
-              onPointerDown={startDrag}
-              isDragOver={dragOverCol === col.id}
-              draggingCardId={dragging?.cardId}
-              colRef={registerCol(col.id)}
-              isVertical
-            />
-          ))}
+      ) : layout === "stack" ? (
+        // ── Stack: 1-col, outer page scrolls ─────────────────────────────
+        <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 flex flex-col gap-3">
+          {COLUMNS.map(renderColumn)}
+        </div>
+      ) : layout === "grid" ? (
+        // ── Grid: 2×2, each column scrolls internally ────────────────────
+        <div className="flex-1 min-h-0 overflow-y-auto p-3">
+          <div className="grid grid-cols-2 gap-3 min-h-full">
+            {COLUMNS.map(renderColumn)}
+          </div>
         </div>
       ) : (
-        // ── Horizontal layout — columns side by side, board scrolls x ────
-        <div className="flex-1 px-7 py-5 overflow-x-auto overflow-y-hidden">
+        // ── Horizontal / Wide: 4-col row, board scrolls x if needed ──────
+        <div className="flex-1 min-h-0 px-7 py-5 overflow-x-auto overflow-y-auto">
           <div
-            className="flex gap-4 min-w-max mx-auto"
+            className="flex gap-4 h-full min-w-max mx-auto"
             style={{ width: "fit-content" }}
           >
-            {COLUMNS.map((col) => (
-              <KanbanColumn
-                key={col.id}
-                column={col}
-                cards={cardsByColumn(col.id)}
-                onAddTask={openAddModal}
-                onDeleteCard={deleteCard}
-                onPointerDown={startDrag}
-                isDragOver={dragOverCol === col.id}
-                draggingCardId={dragging?.cardId}
-                colRef={registerCol(col.id)}
-              />
-            ))}
+            {COLUMNS.map(renderColumn)}
           </div>
         </div>
       )}
@@ -98,7 +107,7 @@ export default function KanbanBoard() {
             position: "fixed",
             left: dragging.x + 14,
             top: dragging.y - 18,
-            width: 272,
+            width: layout === "wide" ? 316 : 272,
             pointerEvents: "none",
             zIndex: 9999,
             opacity: 0.88,
@@ -122,6 +131,7 @@ export default function KanbanBoard() {
           defaultColumn={modalColumn}
           onAdd={addCard}
           onClose={() => setModalOpen(false)}
+          layout={layout}
         />
       )}
     </div>
