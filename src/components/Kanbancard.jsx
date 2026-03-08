@@ -85,7 +85,7 @@ export default function KanbanCard({
         </p>
         {card.description && (
           <p
-            className={`mt-1 font-mono text-text-secondary leading-relaxed ${
+            className={`mt-1 font-mono text-text-secondary leading-relaxed wrap-break-word whitespace-pre-wrap ${
               isWide ? "text-[11.5px]" : "text-xs"
             }`}
           >

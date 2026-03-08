@@ -28,7 +28,7 @@ export default function KanbanColumn({
       ? "flex-1 min-w-[220px]"
       : "w-full";
 
-  const scrollClass = isStack ? "" : "overflow-y-auto max-h-[60vh]";
+  const scrollClass = isStack ? "" : "flex-1 min-h-0 overflow-y-auto";
   const headerPad = isWide ? "px-5 py-4" : isStack ? "px-3 py-3" : "px-4 py-4";
   const bodyPad = isWide ? "p-4" : "p-3";
   const minEmpty = isWide ? "min-h-28" : "min-h-20";
@@ -53,7 +53,7 @@ export default function KanbanColumn({
       style={dragOverStyle}
       className={`
         flex flex-col
-        bg-surface border-2 rounded-lg overflow-hidden
+        bg-surface border-2 rounded-lg
         transition-all duration-200
         ${widthClass}
         ${isStack ? "" : "min-h-80"}
@@ -92,7 +92,7 @@ export default function KanbanColumn({
             w-6.5 h-6.5 flex items-center justify-center rounded-sm
             text-text-muted bg-card border border-border-subtle
             transition-all duration-150
-            hover:border-(--col-color)
+            hover:[text-(--col-color)] hover:[border-(--col-color)]
             hover:[background:color-mix(in_srgb,var(--col-color)_10%,transparent)]
           "
         >
