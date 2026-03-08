@@ -21,9 +21,12 @@ export default function KanbanColumn({
   const isStack = layout === "stack";
   const isWide = layout === "wide";
 
-  // Width: stack & grid fill their container; horizontal/wide use fixed widths
+  // Width: stack & grid fill their container; horizontal/wide flex fluidly
+  // min-w sets the point at which a scrollbar appears rather than clipping
   const widthClass =
-    layout === "horizontal" ? "w-70" : layout === "wide" ? "w-84" : "w-full"; // stack & grid
+    layout === "horizontal" || layout === "wide"
+      ? "flex-1 min-w-[220px]"
+      : "w-full"; // stack & grid
 
   // In grid/horizontal/wide the column scrolls internally only when it has room
   const scrollClass = isStack ? "" : "overflow-y-auto max-h-[60vh]";

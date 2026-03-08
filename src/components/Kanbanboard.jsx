@@ -88,12 +88,9 @@ export default function KanbanBoard() {
           </div>
         </div>
       ) : (
-        // ── Horizontal / Wide: 4-col row, board scrolls x if needed ──────
+        // ── Horizontal / Wide: 4-col row, fluid columns fill available space ──
         <div className="flex-1 min-h-0 px-7 py-5 overflow-x-auto overflow-y-auto">
-          <div
-            className="flex gap-4 h-full min-w-max mx-auto"
-            style={{ width: "fit-content" }}
-          >
+          <div className="flex gap-4 h-full w-full">
             {COLUMNS.map(renderColumn)}
           </div>
         </div>
