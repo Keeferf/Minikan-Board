@@ -25,6 +25,7 @@ export default function KanbanCard({
   onPointerDown,
   isDragging,
   isWide = false,
+  activeTag = "",
 }) {
   const p = PRIORITY[card.priority] ?? PRIORITY.low;
 
@@ -85,14 +86,26 @@ export default function KanbanCard({
           {p.label}
         </span>
 
-        {card.tags?.map((tag) => (
-          <span
-            key={tag}
-            className="font-mono text-[10px] uppercase tracking-widest text-text-muted border border-border-subtle bg-white/3 rounded px-1.5 py-0.5"
-          >
-            {tag}
-          </span>
-        ))}
+        {card.tags?.map((tag) => {
+          const isMatch =
+            activeTag && tag.toLowerCase().includes(activeTag.toLowerCase());
+          return (
+            <span
+              key={tag}
+              className={`
+                font-mono text-[10px] uppercase tracking-widest rounded px-1.5 py-0.5 border
+                transition-colors duration-150
+                ${
+                  isMatch
+                    ? "text-teal border-teal/50 bg-teal/10"
+                    : "text-text-muted border-border-subtle bg-white/3"
+                }
+              `}
+            >
+              {tag}
+            </span>
+          );
+        })}
 
         <button
           onPointerDown={(e) => e.stopPropagation()}

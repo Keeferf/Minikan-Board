@@ -28,6 +28,7 @@ export default function KanbanBoard() {
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalColumn, setModalColumn] = useState("todo");
+  const [filterTag, setFilterTag] = useState("");
 
   const width = useWindowWidth();
   const layout = getLayout(width);
@@ -37,7 +38,14 @@ export default function KanbanBoard() {
     setModalOpen(true);
   }, []);
 
-  const cardsByColumn = (colId) => cards.filter((c) => c.column === colId);
+  const cardsByColumn = (colId) => {
+    const query = filterTag.trim().toLowerCase();
+    return cards
+      .filter((c) => c.column === colId)
+      .filter((c) =>
+        query ? c.tags?.some((t) => t.toLowerCase().includes(query)) : true,
+      );
+  };
   const draggingCard = dragging
     ? cards.find((c) => c.id === dragging.cardId)
     : null;
@@ -55,6 +63,7 @@ export default function KanbanBoard() {
       draggingCardId={dragging?.cardId}
       colRef={registerCol(col.id)}
       layout={layout}
+      activeTag={filterTag.trim().toLowerCase()}
     />
   );
 
@@ -67,6 +76,8 @@ export default function KanbanBoard() {
         totalCards={cards.length}
         onNewTask={() => openAddModal("todo")}
         layout={layout}
+        filterTag={filterTag}
+        onFilterTag={setFilterTag}
       />
 
       {loading ? (

@@ -8,6 +8,8 @@ export default function BoardHeader({
   totalCards,
   onNewTask,
   layout = "horizontal",
+  filterTag,
+  onFilterTag,
 }) {
   const now = new Date();
   const dateStr = now.toLocaleDateString("en-US", {
@@ -61,6 +63,37 @@ export default function BoardHeader({
 
       {/* Right */}
       <div className="flex items-center gap-4">
+        {/* Tag search */}
+        {!isStack && (
+          <div className="relative">
+            <input
+              type="text"
+              value={filterTag}
+              onChange={(e) => onFilterTag(e.target.value)}
+              placeholder="Filter by tag…"
+              className={`
+                bg-surface border border-border-subtle rounded-sm
+                pl-3 pr-7 py-1.5 font-mono text-[11px] text-text-primary
+                placeholder:text-text-muted
+                focus:outline-none focus:border-teal
+                transition-colors duration-150
+                ${isWide ? "w-44" : "w-36"}
+              `}
+            />
+            {filterTag ? (
+              <button
+                onClick={() => onFilterTag("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary transition-colors"
+              >
+                ×
+              </button>
+            ) : (
+              <span className="absolute right-2 top-1/2 -translate-y-1/2 text-text-muted text-[11px]">
+                #
+              </span>
+            )}
+          </div>
+        )}
         {/* Hide task count on stack */}
         {!isStack && (
           <span className="font-mono text-xs text-text-muted">

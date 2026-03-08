@@ -17,6 +17,7 @@ export default function KanbanColumn({
   draggingCardId,
   colRef,
   layout = "horizontal",
+  activeTag = "",
 }) {
   const isStack = layout === "stack";
   const isWide = layout === "wide";
@@ -111,6 +112,7 @@ export default function KanbanColumn({
               onPointerDown={onPointerDown}
               isDragging={card.id === draggingCardId}
               isWide={isWide}
+              activeTag={activeTag}
             />
           ))
         )}
