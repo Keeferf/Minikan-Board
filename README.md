@@ -11,7 +11,7 @@
     <img src="https://img.shields.io/badge/license-MIT-ffba49?style=flat-square" alt="License" />
   </p>
 
-  <a href="https://github.com/your-username/minikan-board/releases/latest">
+  <a href="https://github.com/keeferf/minikan-board/releases/latest">
     <img src="https://img.shields.io/badge/⬇ Download-Windows Installer-20a39e?style=for-the-badge" alt="Download" />
   </a>
 </div>
@@ -22,7 +22,7 @@
 
 > **For users who just want to run the app — no coding required.**
 
-1. Go to the [**Releases**](https://github.com/your-username/minikan-board/releases/latest) page
+1. Go to the [**Releases**](https://github.com/keeferf/minikan-board/releases/latest) page
 2. Under **Assets**, download `minikan-board_x64-setup.exe`
 3. Run the installer — it takes about 10 seconds
 4. Launch **Minikan Board** from your Start menu or desktop
