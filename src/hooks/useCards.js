@@ -80,6 +80,49 @@ export function useCards(boardId) {
     [boardId],
   );
 
+  // ── Update ────────────────────────────────────────────────────────────
+  const updateCard = useCallback(
+    async (updated) => {
+      // Normalise tags to array for the UI
+      const tagsArray = updated.tags
+        ? typeof updated.tags === "string"
+          ? updated.tags
+              .split(",")
+              .map((t) => t.trim())
+              .filter(Boolean)
+          : updated.tags
+        : [];
+
+      setCards((prev) =>
+        prev.map((c) =>
+          c.id === updated.id ? { ...c, ...updated, tags: tagsArray } : c,
+        ),
+      ); // optimistic
+
+      try {
+        await invoke("update_card", {
+          id: updated.id,
+          title: updated.title ?? null,
+          description: updated.description ?? null,
+          priority: updated.priority ?? null,
+          tags: tagsArray.join(",") || null,
+        });
+
+        // If the column changed, move it too
+        const original = cards.find((c) => c.id === updated.id);
+        if (original && original.column !== updated.column) {
+          await invoke("move_card", { id: updated.id, column: updated.column });
+        }
+      } catch (err) {
+        console.error("update_card failed:", err);
+        invoke("get_cards", { boardId })
+          .then((rows) => setCards(rows.map(deserializeCard)))
+          .catch(console.error);
+      }
+    },
+    [boardId, cards],
+  );
+
   // ── Move (called by drag-and-drop) ────────────────────────────────────
   const moveCard = useCallback(
     async (cardId, targetColumn) => {
@@ -99,5 +142,5 @@ export function useCards(boardId) {
     [boardId],
   );
 
-  return { cards, loading, addCard, deleteCard, moveCard };
+  return { cards, loading, addCard, updateCard, deleteCard, moveCard };
 }

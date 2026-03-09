@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { X, ChevronDown, Plus } from "lucide-react";
-import { COLUMNS } from "../lib/kanbanConstants"; // ← shared source of truth
+import { X, ChevronDown, Plus, Pencil } from "lucide-react";
+import { COLUMNS } from "../lib/kanbanConstants";
 
 const PRIORITY_STYLES = {
   active: {
@@ -11,17 +11,26 @@ const PRIORITY_STYLES = {
   idle: "text-text-muted border-border-subtle bg-surface hover:text-text-primary hover:border-border-medium",
 };
 
+// Pass initialCard to open in edit mode, omit it for add mode
 export default function AddTaskModal({
   defaultColumn,
   onAdd,
+  onEdit,
   onClose,
   layout = "horizontal",
+  initialCard = null,
 }) {
-  const [title, setTitle] = useState("");
-  const [desc, setDesc] = useState("");
-  const [priority, setPriority] = useState("medium");
-  const [column, setColumn] = useState(defaultColumn ?? "todo");
-  const [tags, setTags] = useState("");
+  const isEditing = initialCard !== null;
+
+  const [title, setTitle] = useState(initialCard?.title ?? "");
+  const [desc, setDesc] = useState(initialCard?.description ?? "");
+  const [priority, setPriority] = useState(initialCard?.priority ?? "medium");
+  const [column, setColumn] = useState(
+    initialCard?.column ?? defaultColumn ?? "todo",
+  );
+  const [tags, setTags] = useState(
+    initialCard ? (initialCard.tags ?? []).join(", ") : "",
+  );
   const [shake, setShake] = useState(false);
 
   useEffect(() => {
@@ -38,23 +47,28 @@ export default function AddTaskModal({
       setTimeout(() => setShake(false), 400);
       return;
     }
-    onAdd({
+
+    const payload = {
       title: title.trim(),
       description: desc.trim() || null,
       priority,
       column,
-      // Join back to a comma-separated string to match Rust's Option<String>
       tags:
         tags
           .split(",")
           .map((t) => t.trim())
           .filter(Boolean)
           .join(",") || null,
-    });
+    };
+
+    if (isEditing) {
+      onEdit({ ...initialCard, ...payload });
+    } else {
+      onAdd(payload);
+    }
     onClose();
   };
 
-  // Modal width scales with layout
   const modalWidth =
     layout === "stack"
       ? "w-[calc(100vw-2rem)]"
@@ -90,8 +104,8 @@ export default function AddTaskModal({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-border-subtle">
-          <h2 className=" font-extrabold tracking-tight text-text-bright">
-            New Task
+          <h2 className="font-extrabold tracking-tight text-text-bright">
+            {isEditing ? "Edit Task" : "New Task"}
           </h2>
           <button
             onClick={onClose}
@@ -101,7 +115,7 @@ export default function AddTaskModal({
           </button>
         </div>
 
-        {/* Body — every field is a <div> so gap-4 drives all spacing uniformly */}
+        {/* Body */}
         <div className="px-6 py-5 flex flex-col gap-4">
           <div>
             <Label>Title</Label>
@@ -205,8 +219,15 @@ export default function AddTaskModal({
             onClick={handleSubmit}
             className="flex items-center gap-1.5 px-6 py-2 rounded-sm text-[13px] font-bold text-[#0a0a0c] bg-teal transition-all duration-150 hover:brightness-110 hover:-translate-y-px active:translate-y-0"
           >
-            <Plus size={14} strokeWidth={2.5} />
-            Add Task
+            {isEditing ? (
+              <>
+                <Pencil size={14} strokeWidth={2.5} /> Save Changes
+              </>
+            ) : (
+              <>
+                <Plus size={14} strokeWidth={2.5} /> Add Task
+              </>
+            )}
           </button>
         </div>
       </div>

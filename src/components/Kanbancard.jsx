@@ -1,4 +1,4 @@
-import { X } from "lucide-react";
+import { X, Pencil } from "lucide-react";
 
 const PRIORITY = {
   low: {
@@ -24,7 +24,6 @@ const PIP = {
   high: "bg-coral",
 };
 
-// Cycles gold → coral → teal for matched tags so they all feel intentional
 const TAG_MATCH_STYLES = [
   "text-gold  border-gold/50  bg-gold/10",
   "text-coral border-coral/50 bg-coral/10",
@@ -34,6 +33,7 @@ const TAG_MATCH_STYLES = [
 export default function KanbanCard({
   card,
   onDelete,
+  onEdit,
   onPointerDown,
   isDragging,
   isWide = false,
@@ -46,7 +46,6 @@ export default function KanbanCard({
       onPointerDown={(e) => onPointerDown(e, card.id)}
       style={{
         touchAction: "none",
-        // Priority-tinted hover border via CSS custom property
         "--hover-border": p.hoverBorder,
       }}
       className={`
@@ -58,7 +57,7 @@ export default function KanbanCard({
         ${
           isDragging
             ? "opacity-40 scale-[0.97] border-dashed"
-            : "hover:bg-card-hover hover:[border-(--hover-border)] hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
+            : "hover:bg-card-hover hover:border-(--hover-border) hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(0,0,0,0.35)]"
         }
       `}
     >
@@ -94,7 +93,7 @@ export default function KanbanCard({
         )}
       </div>
 
-      {/* Footer — priority + tags + delete */}
+      {/* Footer — priority + tags + actions */}
       <div className="flex items-center gap-1.5 flex-wrap">
         <span
           className={`font-mono text-[10px] uppercase tracking-widest border rounded px-1.5 py-0.5 ${p.color}`}
@@ -105,7 +104,6 @@ export default function KanbanCard({
         {card.tags?.map((tag, i) => {
           const isMatch =
             activeTag && tag.toLowerCase().includes(activeTag.toLowerCase());
-          // Cycle through brand colors for matched tags
           const matchStyle = TAG_MATCH_STYLES[i % TAG_MATCH_STYLES.length];
           return (
             <span
@@ -121,18 +119,35 @@ export default function KanbanCard({
           );
         })}
 
-        <button
-          onPointerDown={(e) => e.stopPropagation()}
-          onClick={() => onDelete(card.id)}
-          aria-label="Delete card"
-          className="
-            ml-auto w-5 h-5 rounded-full flex items-center justify-center
-            transition-all duration-150
-            hover:text-coral hover:bg-coral/10
-          "
-        >
-          <X size={12} strokeWidth={2.5} />
-        </button>
+        {/* Edit + Delete — appear on hover, grouped on the right */}
+        <div className="ml-auto flex items-center gap-1">
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => onEdit(card)}
+            aria-label="Edit card"
+            className="
+              w-5 h-5 rounded-full flex items-center justify-center
+              text-text-muted opacity-0 group-hover:opacity-100
+              transition-all duration-150
+              hover:text-teal hover:bg-teal/10
+            "
+          >
+            <Pencil size={11} strokeWidth={2.5} />
+          </button>
+          <button
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => onDelete(card.id)}
+            aria-label="Delete card"
+            className="
+              w-5 h-5 rounded-full flex items-center justify-center
+              text-text-muted opacity-0 group-hover:opacity-100
+              transition-all duration-150
+              hover:text-coral hover:bg-coral/10
+            "
+          >
+            <X size={12} strokeWidth={2.5} />
+          </button>
+        </div>
       </div>
     </article>
   );

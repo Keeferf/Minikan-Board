@@ -13,6 +13,7 @@ export default function KanbanColumn({
   cards,
   onAddTask,
   onDeleteCard,
+  onEditCard,
   onPointerDown,
   isDragOver,
   draggingCardId,
@@ -92,7 +93,7 @@ export default function KanbanColumn({
             w-6.5 h-6.5 flex items-center justify-center rounded-sm
             text-text-muted bg-card border border-border-subtle
             transition-all duration-150
-            hover:[text-(--col-color)] hover:[border-(--col-color)]
+            hover:text-(--col-color) hover:border-(--col-color)
             hover:[background:color-mix(in_srgb,var(--col-color)_10%,transparent)]
           "
         >
@@ -137,6 +138,7 @@ export default function KanbanColumn({
               key={card.id}
               card={card}
               onDelete={onDeleteCard}
+              onEdit={onEditCard}
               onPointerDown={onPointerDown}
               isDragging={card.id === draggingCardId}
               isWide={isWide}
