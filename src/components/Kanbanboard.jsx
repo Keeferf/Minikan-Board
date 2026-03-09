@@ -62,13 +62,14 @@ export default function KanbanBoard() {
   );
 
   // ── Cards state (scoped to active board) ──────────────────────────────
-  const { cards, loading, addCard, deleteCard, moveCard } =
+  const { cards, loading, addCard, updateCard, deleteCard, moveCard } =
     useCards(activeBoardId);
   const { dragging, dragOverCol, startDrag, registerCol } =
     useDragAndDrop(moveCard);
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalColumn, setModalColumn] = useState("todo");
+  const [editingCard, setEditingCard] = useState(null); // ← card being edited
   const [filterTag, setFilterTag] = useState("");
 
   const width = useWindowWidth();
@@ -95,6 +96,10 @@ export default function KanbanBoard() {
     : null;
   const activeBoard = boards.find((b) => b.id === activeBoardId);
 
+  const openEditModal = useCallback((card) => {
+    setEditingCard(card);
+  }, []);
+
   const renderColumn = (col) => (
     <KanbanColumn
       key={col.id}
@@ -102,6 +107,7 @@ export default function KanbanBoard() {
       cards={cardsByColumn(col.id)}
       onAddTask={openAddModal}
       onDeleteCard={deleteCard}
+      onEditCard={openEditModal}
       onPointerDown={startDrag}
       isDragOver={dragOverCol === col.id}
       draggingCardId={dragging?.cardId}
@@ -208,6 +214,15 @@ export default function KanbanBoard() {
             defaultColumn={modalColumn}
             onAdd={(card) => addCard({ ...card, board_id: activeBoardId })}
             onClose={() => setModalOpen(false)}
+            layout={layout}
+          />
+        )}
+
+        {editingCard && (
+          <AddTaskModal
+            initialCard={editingCard}
+            onEdit={updateCard}
+            onClose={() => setEditingCard(null)}
             layout={layout}
           />
         )}
