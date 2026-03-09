@@ -237,12 +237,6 @@ All tokens are defined in `index.css` under `@theme` and consumed as standard Ta
 
 ---
 
-## Contributing
-
-Contributions are welcome. Please open an issue first to discuss what you'd like to change, then submit a pull request against `main`. Make sure any Rust changes compile cleanly with `cargo check` and any frontend changes pass `npm run lint` before opening a PR.
-
----
-
 ## License
 
 [MIT](./LICENSE)
