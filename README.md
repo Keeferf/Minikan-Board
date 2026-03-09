@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./icons/128x128.png" alt="Minikan logo" width="96" />
+  <img src="./src-tauri//icons/128x128@2x.png" alt="Minikan logo" width="96" />
   <h1>Minikan Board</h1>
   <p>A fast, minimal Kanban board for your desktop. No accounts. No sync. Just work.</p>
 
